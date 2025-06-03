@@ -1,0 +1,75 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Areas\Admin\Views\Category\Update.cshtml *@
+@model web_lab_4.Models.Category
+
+@{
+    ViewData["Title"] = "Edit Category";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-edit"></i> Edit Category
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Categories
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Category Information</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Update" method="post">
+                    <input asp-for="Id" type="hidden" />
+                    
+                    <div class="form-group mb-3">
+                        <label asp-for="Name" class="form-label">Category Name *</label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter category name" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-action="Index" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Category Stats</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Category ID:</strong> #@Model.Id</p>
+                <p><strong>Products:</strong> 
+                    @if (Model.Products != null)
+                    {
+                        <span class="badge bg-info">@Model.Products.Count()</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">0</span>
+                    }
+                </p>
+                <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
+                <p><strong>Created:</strong> @DateTime.Now.ToString("MMM dd, yyyy")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,120 @@
+@* filepath: Areas/Admin/Views/Product/Add.cshtml *@
+@model web_lab_4.Models.Product
+
+@{
+    ViewData["Title"] = "Add New Product";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-plus-circle"></i> Add New Product
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Product Information</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Add" method="post" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mb-3">
+                                <label asp-for="Name" class="form-label">Product Name *</label>
+                                <input asp-for="Name" class="form-control" placeholder="Enter product name" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Price" class="form-label">Price *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="Price" class="form-control" type="number" step="0.01" placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="CategoryId" class="form-label">Category *</label>
+                                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories">
+                                    <option value="">-- Select Category --</option>
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter product description..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="imageUrl" class="form-label">Product Image</label>
+                        <input type="file" name="imageUrl" class="form-control" accept="image/*" />
+                        <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 5MB</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-action="Index" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tips</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Product Guidelines</h6>
+                    <ul class="mb-0">
+                        <li>Use clear, descriptive product names</li>
+                        <li>Upload high-quality images</li>
+                        <li>Write detailed descriptions</li>
+                        <li>Set competitive prices</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Image preview
+        document.querySelector('input[name="imageUrl"]').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // You can add image preview functionality here
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+}

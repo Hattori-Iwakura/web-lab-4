@@ -1,31 +1,78 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using web_lab_4.Models;
 using web_lab_4.Repositories;
+using web_lab_4.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add services to the container.
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+})
+.AddDefaultTokenProviders()
+.AddDefaultUI()
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Configure authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Admin"));
+});
+
+builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
+
+// Repository registrations
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
+// Add this if you have OrderRepository
+// builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Seed data
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await DataSeeder.SeedRolesAndUsers(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
-app.UseStaticFiles(); // Add this if not already present
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapRazorPages();
+
+app.MapControllerRoute(
+    name: "admin",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

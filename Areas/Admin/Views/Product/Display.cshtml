@@ -1,0 +1,184 @@
+@* filepath: Areas/Admin/Views/Product/Display.cshtml *@
+@model web_lab_4.Models.Product
+
+@{
+    ViewData["Title"] = "Product Details";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-eye"></i> Product Details
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete(@Model.Id, '@Model.Name')">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Product Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="text-primary">@Model.Name</h4>
+                        <p class="text-muted mb-4">Product ID: #@Model.Id</p>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-gray-800">Price</h6>
+                            <h3 class="text-success font-weight-bold">@Model.Price.ToString("C")</h3>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6 class="text-gray-800">Category</h6>
+                            @if (Model.Category != null)
+                            {
+                                <span class="badge bg-primary fs-6">@Model.Category.Name</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning fs-6">No Category</span>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <h6 class="text-gray-800">Status</h6>
+                            <span class="badge bg-success fs-6">Active</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded shadow" />
+                        }
+                        else
+                        {
+                            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 300px;">
+                                <div class="text-center">
+                                    <i class="fas fa-image fa-4x text-muted"></i>
+                                    <p class="text-muted mt-3">No Image Available</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <hr>
+                    <div class="mt-4">
+                        <h6 class="text-gray-800">Description</h6>
+                        <p class="text-gray-700">@Model.Description</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Product Analytics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row no-gutters align-items-center mb-3">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Views</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">245</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-eye fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+
+                <div class="row no-gutters align-items-center mb-3">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Sales</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">12</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Revenue</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@((Model.Price * 12).ToString("C"))</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Product
+                    </a>
+                    <button type="button" class="btn btn-info">
+                        <i class="fas fa-copy"></i> Duplicate Product
+                    </button>
+                    <button type="button" class="btn btn-secondary">
+                        <i class="fas fa-archive"></i> Archive Product
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the product <strong id="productName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning"></i> This action cannot be undone and will permanently remove all product data.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="deleteConfirmBtn" href="#" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete Product
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(productId, productName) {
+            document.getElementById('productName').textContent = productName;
+            document.getElementById('deleteConfirmBtn').href = '@Url.Action("Delete", "Product")/' + productId;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

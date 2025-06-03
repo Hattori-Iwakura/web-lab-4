@@ -1,0 +1,234 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Areas\Admin\Views\Category\Index.cshtml *@
+@model IEnumerable<web_lab_4.Models.Category>
+
+@{
+    ViewData["Title"] = "Categories Management";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tags"></i> Categories Management
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a asp-action="Add" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Category
+            </a>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">All Categories</a></li>
+                <li><a class="dropdown-item" href="#">Active Categories</a></li>
+                <li><a class="dropdown-item" href="#">Empty Categories</a></li>
+            </ul>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Categories
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count()</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tags fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Active Categories
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count()</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Categories with Products
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Where(c => c.Products != null && c.Products.Any()).Count()</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Empty Categories
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Where(c => c.Products == null || !c.Products.Any()).Count()</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="m-0 font-weight-bold text-primary">Categories List</h6>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search categories..." id="searchInput">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered" id="categoriesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Products Count</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>#@item.Id</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-tag"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-weight-bold">@item.Name</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (item.Products != null)
+                                    {
+                                        <span class="badge bg-info">@item.Products.Count()</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">0</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Update" asp-route-id="@item.Id" class="btn btn-warning btn-sm" title="Edit Category">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm" title="Delete Category">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Categories Found</h4>
+                <p class="text-muted">Start by creating your first product category.</p>
+                <a asp-action="Add" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add First Category
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('#categoriesTable tbody tr');
+            
+            tableRows.forEach(row => {
+                const categoryName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                
+                if (categoryName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+}
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .text-xs {
+        font-size: 0.7rem;
+    }
+</style>

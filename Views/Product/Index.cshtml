@@ -1,33 +1,260 @@
-﻿@model IEnumerable<web_lab_4.Models.Product>
+﻿@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Views\Product\Index.cshtml *@
+@model IEnumerable<web_lab_4.Models.Product>
 
-<h2>Products</h2>
-<a asp-action="Add" class="btn btn-primary mb-3">Add Product</a>
+@{
+    ViewData["Title"] = "Products";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
-<div class="row">
-    @foreach (var product in Model)
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-box text-primary"></i> Our Products
+        </h2>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-area="Admin" asp-controller="Product" asp-action="Add" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Product
+            </a>
+        }
+    </div>
+
+    @if (Model.Any())
     {
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                @* Hiển thị ảnh nếu có, nếu không có ảnh thì show ảnh mặc định *@
-                <img src="@(!string.IsNullOrEmpty(product.ImageUrl) ? product.ImageUrl : "/images/no-image.png")"
-                     class="card-img-top"
-                     alt="@product.Name"
-                     style="object-fit: cover; height: 200px;" />
+        <div class="row">
+            @foreach (var product in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm product-card">
+                        <div class="position-relative">
+                            @if (!string.IsNullOrEmpty(product.ImageUrl))
+                            {
+                                <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 250px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            }
+                            @if (product.Price < 100000) // Sale badge for products under 100k
+                            {
+                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">Sale!</span>
+                            }
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text text-muted small flex-grow-1">@product.Description</p>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h5 text-primary mb-0">@product.Price.ToString("C")</span>
+                                    @if (product.Category != null)
+                                    {
+                                        <span class="badge bg-secondary">@product.Category.Name</span>
+                                    }
+                                </div>
+                            </div>
 
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">@product.Name</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">@product.Category?.Name</h6>
-                    <p class="card-text">@product.Description</p>
-                    <p class="card-text fw-bold">
-                        Price: @product.Price.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))
-                    </p>
-                    <div class="mt-auto">
-                        <a asp-action="Display" asp-route-id="@product.Id" class="btn btn-primary btn-sm me-1">View</a>
-                        <a asp-action="Update" asp-route-id="@product.Id" class="btn btn-warning btn-sm me-1">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-danger btn-sm">Delete</a>
+                            <div class="mt-auto">
+                                <div class="row g-2">
+                                    <div class="col-8">
+                                        <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
+                                            <input type="hidden" name="productId" value="@product.Id" />
+                                            <input type="hidden" name="quantity" value="1" />
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-cart-plus"></i> Add to Cart
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="col-4">
+                                        <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary w-100">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <div class="row g-2 mt-2">
+                                        <div class="col-6">
+                                            <a asp-area="Admin" asp-controller="Product" asp-action="Update" asp-route-id="@product.Id" class="btn btn-warning btn-sm w-100">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="col-6">
+                                            <a asp-area="Admin" asp-controller="Product" asp-action="Delete" asp-route-id="@product.Id" class="btn btn-danger btn-sm w-100">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No Products Available</h4>
+            <p class="text-muted">Check back soon for new products!</p>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-area="Admin" asp-controller="Product" asp-action="Add" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add First Product
+                </a>
+            }
         </div>
     }
 </div>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                @TempData["SuccessMessage"]
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Handle add to cart form submission
+        $('.add-to-cart-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
+            const originalText = submitBtn.html();
+            
+            // Show loading state
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    // Show success animation
+                    submitBtn.removeClass('btn-primary').addClass('btn-success')
+                           .html('<i class="fas fa-check"></i> Added!');
+                    
+                    // Update cart count
+                    if (window.updateCartCount) {
+                        window.updateCartCount();
+                    }
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(function() {
+                        submitBtn.prop('disabled', false)
+                               .removeClass('btn-success').addClass('btn-primary')
+                               .html(originalText);
+                    }, 2000);
+                    
+                    // Show toast notification
+                    showToast('Product added to cart successfully!', 'success');
+                },
+                error: function() {
+                    // Show error state
+                    submitBtn.removeClass('btn-primary').addClass('btn-danger')
+                           .html('<i class="fas fa-exclamation-triangle"></i> Error');
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(function() {
+                        submitBtn.prop('disabled', false)
+                               .removeClass('btn-danger').addClass('btn-primary')
+                               .html(originalText);
+                    }, 2000);
+                    
+                    showToast('Error adding product to cart. Please try again.', 'error');
+                }
+            });
+        });
+        
+        // Toast notification function
+        function showToast(message, type) {
+            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            
+            const toast = `
+                <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header ${bgClass} text-white">
+                            <i class="fas ${iconClass} me-2"></i>
+                            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(toast);
+            
+            // Auto remove toast after 5 seconds
+            setTimeout(function() {
+                $('.toast').fadeOut();
+            }, 5000);
+        }
+        
+        // Auto-hide toasts
+        $('.toast').toast({
+            autohide: true,
+            delay: 5000
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .product-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .card-img-top {
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+        
+        .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+        }
+        
+        .toast {
+            min-width: 300px;
+        }
+        
+        @@media (max-width: 768px) {
+            .col-lg-4 {
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+}

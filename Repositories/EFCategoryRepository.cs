@@ -2,6 +2,7 @@ using web_lab_4.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using web_lab_4.Data;
 
 namespace web_lab_4.Repositories
 {

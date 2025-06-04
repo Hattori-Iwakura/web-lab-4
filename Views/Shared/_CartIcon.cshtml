@@ -1,0 +1,38 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Views\Shared\_CartIcon.cshtml *@
+<a href="@Url.Action("Index", "ShoppingCart")" class="nav-link position-relative">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="cart-text d-none d-md-inline">Cart</span>
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count" id="cartCount" style="font-size: 0.7rem;">
+        0
+    </span>
+</a>
+
+<script>
+    // Update cart count on page load
+    $(document).ready(function() {
+        updateCartCount();
+    });
+
+    function updateCartCount() {
+        $.get('@Url.Action("GetCartCount", "ShoppingCart")', function(data) {
+            $('#cartCount').text(data.count);
+            if (data.count > 0) {
+                $('#cartCount').show();
+            } else {
+                $('#cartCount').hide();
+            }
+        });
+    }
+
+    // Call this function after adding items to cart
+    window.updateCartCount = updateCartCount;
+</script>
+
+<style>
+    .cart-count {
+        min-width: 1.2rem;
+        height: 1.2rem;
+        line-height: 1.2rem;
+        padding: 0;
+    }
+</style>

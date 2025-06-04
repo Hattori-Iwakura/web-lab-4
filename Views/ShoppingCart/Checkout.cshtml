@@ -1,0 +1,263 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Views\ShoppingCart\Checkout.cshtml *@
+@model web_lab_4.Models.Order
+
+@{
+    ViewData["Title"] = "Checkout";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var cart = ViewBag.Cart as web_lab_4.Models.ShoppingCart;
+}
+
+<div class="container my-5">
+    <!-- Progress Steps -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="progress mb-3" style="height: 10px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: 75%"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span class="text-success"><i class="fas fa-check-circle"></i> Cart</span>
+                <span class="text-success"><i class="fas fa-check-circle"></i> Shipping</span>
+                <span class="text-primary"><strong><i class="fas fa-circle"></i> Payment</strong></span>
+                <span class="text-muted"><i class="far fa-circle"></i> Confirmation</span>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Checkout" method="post" id="checkoutForm">
+        <div class="row">
+            <!-- Checkout Form -->
+            <div class="col-lg-8">
+                <!-- Shipping Information -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-truck"></i> Shipping Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label asp-for="ShippingAddress" class="form-label">Shipping Address *</label>
+                                <textarea asp-for="ShippingAddress" class="form-control" rows="3" placeholder="Enter your full shipping address"></textarea>
+                                <span asp-validation-for="ShippingAddress" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Notes -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-sticky-note"></i> Order Notes (Optional)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Special Instructions</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Any special instructions for your order..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-credit-card"></i> Payment Method</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="cod" checked>
+                                    <label class="form-check-label" for="cod">
+                                        <i class="fas fa-money-bill-wave text-success"></i> Cash on Delivery
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="paymentMethod" id="online" value="online">
+                                    <label class="form-check-label" for="online">
+                                        <i class="fas fa-credit-card text-primary"></i> Online Payment
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Online Payment Details (Hidden by default) -->
+                        <div id="onlinePaymentDetails" style="display: none;">
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Card Number</label>
+                                    <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" placeholder="MM/YY" maxlength="5">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">CVV</label>
+                                    <input type="text" class="form-control" placeholder="123" maxlength="4">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Cardholder Name</label>
+                                    <input type="text" class="form-control" placeholder="Enter cardholder name">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-receipt"></i> Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Order Items -->
+                        <div class="mb-3">
+                            <h6>Items (@cart.TotalItems())</h6>
+                            @foreach (var item in cart.Items)
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="flex-grow-1">
+                                        <small class="text-muted">@item.ProductName x @item.Quantity</small>
+                                    </div>
+                                    <small class="font-weight-bold">@item.TotalPrice.ToString("C")</small>
+                                </div>
+                            }
+                        </div>
+
+                        <hr>
+
+                        <!-- Price Breakdown -->
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>@cart.TotalPrice().ToString("C")</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping:</span>
+                            <span class="text-success">Free</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Tax (10%):</span>
+                            <span>@((cart.TotalPrice() * 0.1m).ToString("C"))</span>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between mb-4">
+                            <strong>Total:</strong>
+                            <strong class="text-primary fs-5">@((cart.TotalPrice() * 1.1m).ToString("C"))</strong>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="placeOrderBtn">
+                                <i class="fas fa-check-circle"></i> Place Order
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Cart
+                            </a>
+                        </div>
+
+                        <!-- Security Notice -->
+                        <div class="mt-3 text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt text-success"></i> 
+                                SSL Secured Checkout
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Payment method toggle
+        $('input[name="paymentMethod"]').change(function() {
+            if ($(this).val() === 'online') {
+                $('#onlinePaymentDetails').slideDown();
+            } else {
+                $('#onlinePaymentDetails').slideUp();
+            }
+        });
+
+        // Form validation
+        $('#checkoutForm').submit(function(e) {
+            const shippingAddress = $('textarea[name="ShippingAddress"]').val().trim();
+            
+            if (!shippingAddress) {
+                e.preventDefault();
+                alert('Please enter your shipping address.');
+                $('textarea[name="ShippingAddress"]').focus();
+                return false;
+            }
+
+            // Show loading state
+            $('#placeOrderBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+        });
+
+        // Auto-format card number
+        $(document).on('input', 'input[placeholder*="1234"]', function() {
+            let value = $(this).val().replace(/\s/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            if (formattedValue !== $(this).val()) {
+                $(this).val(formattedValue);
+            }
+        });
+
+        // Auto-format expiry date
+        $(document).on('input', 'input[placeholder="MM/YY"]', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            $(this).val(value);
+        });
+
+        // CVV numeric only
+        $(document).on('input', 'input[placeholder="123"]', function() {
+            $(this).val($(this).val().replace(/[^0-9]/g, ''));
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .progress {
+            border-radius: 10px;
+        }
+        
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        
+        .sticky-top {
+            z-index: 1020;
+        }
+        
+        @@media (max-width: 768px) {
+            .sticky-top {
+                position: relative !important;
+                top: auto !important;
+            }
+        }
+
+        .card {
+            transition: box-shadow 0.15s ease-in-out;
+        }
+
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+    </style>
+}

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace web_lab_4.Views.Home
+namespace web_lab_4.Views.ShoppingCart
 {
-    public class UpdateModel : PageModel
+    public class OrderDetailModel : PageModel
     {
         public void OnGet()
         {

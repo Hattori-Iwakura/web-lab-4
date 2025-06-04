@@ -17,8 +17,8 @@ namespace web_lab_4.Controllers
         // Hiển thị danh sách sản phẩm
         public async Task<IActionResult> Index()
         {
-        var products = await _productRepository.GetAllAsync();
-        return View(products);
+            var products = await _productRepository.GetAllAsync();
+            return View(products);
         }
         // Hiển thị form thêm sản phẩm mới
         public async Task<IActionResult> Add()
@@ -59,13 +59,21 @@ namespace web_lab_4.Controllers
         }
         //Nhớ tạo folder images trong wwwroot
         // Hiển thị thông tin chi tiết sản phẩm
-        public async Task<IActionResult> Display(int id)
+        public async Task<IActionResult> Details(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
+
+            // Get related products from the same category
+            var relatedProducts = await _productRepository.GetByCategoryAsync(product.CategoryId);
+            var relatedProductsList = relatedProducts.Where(p => p.Id != id).Take(4).ToList();
+
+            ViewBag.RelatedProducts = relatedProductsList;
+            ViewBag.Category = await _categoryRepository.GetByIdAsync(product.CategoryId);
+
             return View(product);
         }
         // Hiển thị form cập nhật sản phẩm
@@ -87,7 +95,7 @@ namespace web_lab_4.Controllers
         IFormFile imageUrl)
         {
             ModelState.Remove("ImageUrl"); // Loại bỏ xác thực ModelState cho ImageUrl
-        if (id != product.Id)
+            if (id != product.Id)
             {
                 return NotFound();
             }
@@ -96,7 +104,7 @@ namespace web_lab_4.Controllers
                 var existingProduct = await
                 _productRepository.GetByIdAsync(id); // Giả định có phương thức GetByIdAsync
                                                      // Giữ nguyên thông tin hình ảnh nếu không có hình mới được tải lên
-            if (imageUrl == null)
+                if (imageUrl == null)
                 {
                     product.ImageUrl = existingProduct.ImageUrl;
                 }

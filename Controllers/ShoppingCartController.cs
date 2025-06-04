@@ -138,18 +138,22 @@ namespace web_lab_4.Controllers
                     return RedirectToAction("Login", "Account", new { area = "Identity" });
                 }
 
+                // Set UserId and clear its validation error
+                order.UserId = user.Id;
+                ModelState.Remove("UserId"); // Clear validation error for UserId
+                
+                // Set other properties that aren't from the form
+                order.OrderDate = DateTime.UtcNow;
+                order.Status = "Pending";
+                order.TotalPrice = cart.Items.Sum(i => i.Price * i.Quantity);
+
                 // Debug: Log what we're receiving
                 System.Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
                 System.Console.WriteLine($"ShippingAddress: '{order.ShippingAddress}'");
+                System.Console.WriteLine($"UserId: '{order.UserId}'");
 
                 if (ModelState.IsValid)
                 {
-                    // Set order properties
-                    order.UserId = user.Id; // Replace with user.Id when using Identity
-                    order.OrderDate = DateTime.UtcNow;
-                    order.Status = "Pending";
-                    order.TotalPrice = cart.Items.Sum(i => i.Price * i.Quantity);
-
                     // Create order details
                     var orderDetails = new List<OrderDetail>();
                     foreach (var item in cart.Items)
@@ -180,7 +184,7 @@ namespace web_lab_4.Controllers
                     {
                         System.Console.WriteLine($"Validation Error: {modelError.ErrorMessage}");
                     }
-
+                    
                     TempData["ErrorMessage"] = "Please correct the errors below.";
                 }
             }
@@ -231,6 +235,30 @@ namespace web_lab_4.Controllers
                 .ToListAsync();
 
             return View(orders);
+        }
+
+        // View order details
+        [Authorize]
+        public async Task<IActionResult> OrderDetail(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            // Verify the order belongs to the current user
+            var user = await _userManager.GetUserAsync(User);
+            if (order.UserId != user?.Id)
+            {
+                return Forbid();
+            }
+
+            return View(order);
         }
     }
 }

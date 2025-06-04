@@ -1,0 +1,389 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Areas\Admin\Views\User\Index.cshtml *@
+@model List<web_lab_4.Models.UserViewModel>
+
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-users"></i> User Management
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
+            <i class="fas fa-download"></i> Export Users
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Users</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Users</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.ActiveUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Locked Users</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.LockedUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-lock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Unconfirmed</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.UnconfirmedUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Filters
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Search Users</label>
+                <input type="text" name="searchTerm" class="form-control" placeholder="Username or email..." value="@ViewBag.SearchTerm">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Role</label>
+                <select name="roleFilter" class="form-select">
+                    <option value="">All Roles</option>
+                    @foreach (var role in ViewBag.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole>)
+                    {
+                        <option value="@role.Name" selected="@(ViewBag.RoleFilter == role.Name)">@role.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="statusFilter" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="active" selected="@(ViewBag.StatusFilter == "active")">Active</option>
+                    <option value="locked" selected="@(ViewBag.StatusFilter == "locked")">Locked</option>
+                    <option value="unconfirmed" selected="@(ViewBag.StatusFilter == "unconfirmed")">Unconfirmed</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-table"></i> Users List
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-2">
+                                            @user.UserName.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <strong>@user.UserName</strong><br>
+                                            <small class="text-muted">ID: @user.Id.Substring(0, 8)...</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @user.Email
+                                    @if (!user.EmailConfirmed)
+                                    {
+                                        <br><span class="badge bg-warning text-dark">Unconfirmed</span>
+                                    }
+                                    else
+                                    {
+                                        <br><span class="badge bg-success">Confirmed</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.Roles.Any())
+                                    {
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <span class="badge bg-primary me-1">@role</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No Roles</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-lock"></i> Locked
+                                        </span>
+                                    }
+                                    
+                                    @if (user.AccessFailedCount > 0)
+                                    {
+                                        <br><small class="text-warning">Failed logins: @user.AccessFailedCount</small>
+                                    }
+                                </td>
+                                <td>
+                                    <strong>@user.OrderCount</strong> orders
+                                </td>
+                                <td>
+                                    <span class="text-success fw-bold">@user.TotalSpent.ToString("C")</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-action="ManageRoles" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary" title="Manage Roles">
+                                            <i class="fas fa-user-cog"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleLock('@user.Id', '@user.UserName', @user.IsActive.ToString().ToLower())" title="@(user.IsActive ? "Lock User" : "Unlock User")">
+                                            <i class="fas fa-@(user.IsActive ? "lock" : "unlock")"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Users Found</h5>
+                <p class="text-muted">No users match your current filter criteria.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-download"></i> Export Users
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Choose export format:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-success" onclick="exportUsers('csv')">
+                        <i class="fas fa-file-csv"></i> Export as CSV
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="exportUsers('excel')">
+                        <i class="fas fa-file-excel"></i> Export as Excel
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="exportUsers('pdf')">
+                        <i class="fas fa-file-pdf"></i> Export as PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleLock(userId, userName, isActive) {
+            const action = isActive ? 'lock' : 'unlock';
+            const message = `Are you sure you want to ${action} user "${userName}"?`;
+            
+            if (confirm(message)) {
+                $.ajax({
+                    url: '@Url.Action("ToggleLock")',
+                    type: 'POST',
+                    data: {
+                        id: userId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Error updating user status. Please try again.');
+                    }
+                });
+            }
+        }
+
+        function exportUsers(format) {
+            alert(`Export as ${format} functionality coming soon!`);
+            $('#exportModal').modal('hide');
+        }
+
+        // Auto-refresh page every 2 minutes to show updated data
+        setInterval(function() {
+            if (document.visibilityState === 'visible') {
+                window.location.reload();
+            }
+        }, 120000);
+    </script>
+}
+
+@section Styles {
+    <style>
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .border-left-primary {
+            border-left: 0.25rem solid #4e73df !important;
+        }
+
+        .border-left-success {
+            border-left: 0.25rem solid #1cc88a !important;
+        }
+
+        .border-left-warning {
+            border-left: 0.25rem solid #f6c23e !important;
+        }
+
+        .border-left-info {
+            border-left: 0.25rem solid #36b9cc !important;
+        }
+
+        .text-xs {
+            font-size: 0.7rem;
+        }
+
+        .text-gray-800 {
+            color: #5a5c69 !important;
+        }
+
+        .text-gray-300 {
+            color: #dddfeb !important;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #5a5c69;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+        }
+
+        .btn-group .btn {
+            margin-right: 2px;
+        }
+
+        .btn-group .btn:last-child {
+            margin-right: 0;
+        }
+
+        @@media (max-width: 768px) {
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            
+            .btn-group .btn {
+                margin-right: 0;
+            }
+        }
+    </style>
+}
+
+@Html.AntiForgeryToken()

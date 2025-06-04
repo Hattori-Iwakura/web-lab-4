@@ -169,15 +169,15 @@
                                 <td>
                                     @if (item.Category != null)
                                     {
-                                        <span class="badge badge-secondary">@item.Category.Name</span>
+                                        <span class="badge bg-secondary">@item.Category.Name</span>
                                     }
                                     else
                                     {
-                                        <span class="badge badge-warning">No Category</span>
+                                        <span class="badge bg-warning text-dark">No Category</span>
                                     }
                                 </td>
                                 <td>
-                                    <span class="badge badge-success">Active</span>
+                                    <span class="badge bg-success">Active</span>
                                 </td>
                                 <td>
                                     <small class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy")</small>

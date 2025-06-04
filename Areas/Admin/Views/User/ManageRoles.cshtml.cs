@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace web_lab_4.Views.Home
+namespace web_lab_4.Areas.Admin.Views.User
 {
-    public class DeleteModel : PageModel
+    public class ManageRolesModel : PageModel
     {
         public void OnGet()
         {

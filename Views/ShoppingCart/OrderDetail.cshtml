@@ -1,0 +1,477 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Views\ShoppingCart\OrderDetail.cshtml *@
+@model web_lab_4.Models.Order
+
+@{
+    ViewData["Title"] = $"Order #{Model.Id} Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-action="OrderHistory">Order History</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Order #@Model.Id</li>
+        </ol>
+    </nav>
+
+    <!-- Order Header -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4 class="mb-0">
+                        <i class="fas fa-receipt"></i> Order #@Model.Id
+                    </h4>
+                    <small>Placed on @Model.OrderDate.ToString("MMMM dd, yyyy 'at' hh:mm tt")</small>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    @switch (Model.Status)
+                    {
+                        case "Pending":
+                            <span class="badge bg-warning fs-5">
+                                <i class="fas fa-clock"></i> @Model.Status
+                            </span>
+                            break;
+                        case "Processing":
+                            <span class="badge bg-info fs-5">
+                                <i class="fas fa-cog fa-spin"></i> @Model.Status
+                            </span>
+                            break;
+                        case "Shipped":
+                            <span class="badge bg-success fs-5">
+                                <i class="fas fa-shipping-fast"></i> @Model.Status
+                            </span>
+                            break;
+                        case "Completed":
+                            <span class="badge bg-success fs-5">
+                                <i class="fas fa-check-circle"></i> @Model.Status
+                            </span>
+                            break;
+                        case "Cancelled":
+                            <span class="badge bg-danger fs-5">
+                                <i class="fas fa-times-circle"></i> @Model.Status
+                            </span>
+                            break;
+                        default:
+                            <span class="badge bg-secondary fs-5">@Model.Status</span>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Order Items -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-box"></i> Order Items
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detail in Model.OrderDetails)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(detail.Product?.ImageUrl))
+                                                {
+                                                    <img src="@detail.Product.ImageUrl" alt="@detail.Product.Name" class="me-3 rounded shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="me-3 bg-light rounded d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px;">
+                                                        <i class="fas fa-image fa-2x text-muted"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <h6 class="mb-1">@detail.Product?.Name</h6>
+                                                    <small class="text-muted">Product ID: #@detail.ProductId</small><br>
+                                                    <small class="text-muted">Category: @detail.Product?.Category?.Name</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="fw-bold">@detail.Price.ToString("C")</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge bg-secondary fs-6">@detail.Quantity</span>
+                                        </td>
+                                        <td class="align-middle text-end">
+                                            <span class="fw-bold text-success">@((detail.Price * detail.Quantity).ToString("C"))</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3" class="text-end fs-5">Total Amount:</th>
+                                    <th class="text-end text-success fs-4">@Model.TotalPrice.ToString("C")</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Timeline -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-timeline"></i> Order Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker bg-success">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Order Placed</h6>
+                                <small class="text-muted">@Model.OrderDate.ToString("MMM dd, yyyy HH:mm")</small>
+                                <p class="mb-0 small">Your order has been successfully placed and is being prepared.</p>
+                            </div>
+                        </div>
+                        
+                        @if (Model.Status != "Pending" && Model.Status != "Cancelled")
+                        {
+                            <div class="timeline-item @(Model.Status != "Pending" ? "completed" : "")">
+                                <div class="timeline-marker @(Model.Status != "Pending" ? "bg-primary" : "bg-light")">
+                                    <i class="fas @(Model.Status != "Pending" ? "fa-cog text-white" : "fa-circle text-muted")"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Order Confirmed</h6>
+                                    <small class="text-muted">Processing started</small>
+                                    <p class="mb-0 small">Your order is being processed and prepared for shipment.</p>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (Model.Status == "Shipped" || Model.Status == "Completed")
+                        {
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker bg-info">
+                                    <i class="fas fa-truck text-white"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Order Shipped</h6>
+                                    <small class="text-muted">En route to delivery address</small>
+                                    <p class="mb-0 small">Your order has been shipped and is on its way to you.</p>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (Model.Status == "Completed")
+                        {
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker bg-success">
+                                    <i class="fas fa-home text-white"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Order Delivered</h6>
+                                    <small class="text-muted">Successfully completed</small>
+                                    <p class="mb-0 small">Your order has been delivered successfully. Thank you for shopping with us!</p>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (Model.Status == "Cancelled")
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-danger">
+                                    <i class="fas fa-times text-white"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Order Cancelled</h6>
+                                    <small class="text-muted">Order was cancelled</small>
+                                    <p class="mb-0 small">This order has been cancelled. If you have any questions, please contact support.</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Information -->
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Order Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Order ID:</dt>
+                        <dd class="col-sm-6">#@Model.Id</dd>
+                        
+                        <dt class="col-sm-6">Order Date:</dt>
+                        <dd class="col-sm-6">@Model.OrderDate.ToString("MMM dd, yyyy")</dd>
+                        
+                        <dt class="col-sm-6">Order Time:</dt>
+                        <dd class="col-sm-6">@Model.OrderDate.ToString("hh:mm tt")</dd>
+                        
+                        <dt class="col-sm-6">Status:</dt>
+                        <dd class="col-sm-6">
+                            <span class="badge bg-@(Model.Status == "Completed" ? "success" : Model.Status == "Cancelled" ? "danger" : Model.Status == "Shipped" ? "info" : "warning")">
+                                @Model.Status
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-6">Items:</dt>
+                        <dd class="col-sm-6">@Model.OrderDetails.Sum(od => od.Quantity) items</dd>
+                        
+                        <dt class="col-sm-6">Total:</dt>
+                        <dd class="col-sm-6"><strong class="text-success">@Model.TotalPrice.ToString("C")</strong></dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Shipping Information -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map-marker-alt"></i> Shipping Address
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">@Model.ShippingAddress</p>
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <hr>
+                        <h6>Special Instructions:</h6>
+                        <p class="mb-0 text-muted">@Model.Notes</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="OrderHistory" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Order History
+                        </a>
+                        
+                        @if (Model.Status == "Completed")
+                        {
+                            <button class="btn btn-outline-success" onclick="reorderItems()">
+                                <i class="fas fa-redo"></i> Reorder Items
+                            </button>
+                        }
+                        
+                        @if (Model.Status == "Pending")
+                        {
+                            <button class="btn btn-outline-danger" onclick="cancelOrder()">
+                                <i class="fas fa-times"></i> Cancel Order
+                            </button>
+                        }
+                        
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print"></i> Print Order
+                        </button>
+                        
+                        <button class="btn btn-outline-info" onclick="shareOrder()">
+                            <i class="fas fa-share"></i> Share Order
+                        </button>
+                        
+                        <a href="mailto:support@blluearchive.com?subject=Order%20%23@Model.Id%20Support" class="btn btn-outline-warning">
+                            <i class="fas fa-envelope"></i> Contact Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function reorderItems() {
+            if (confirm('Add all items from this order to your cart?')) {
+                // You can implement this to add all order items back to cart
+                $.ajax({
+                    url: '@Url.Action("ReorderItems", "ShoppingCart")',
+                    type: 'POST',
+                    data: { orderId: @Model.Id },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Items added to cart successfully!');
+                            window.location.href = '@Url.Action("Index", "ShoppingCart")';
+                        } else {
+                            alert('Error adding items to cart: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error processing reorder. Please try again.');
+                    }
+                });
+            }
+        }
+        
+        function cancelOrder() {
+            if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                $.ajax({
+                    url: '@Url.Action("CancelOrder", "ShoppingCart")',
+                    type: 'POST',
+                    data: { orderId: @Model.Id },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Order cancelled successfully.');
+                            location.reload();
+                        } else {
+                            alert('Error cancelling order: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error cancelling order. Please try again.');
+                    }
+                });
+            }
+        }
+        
+        function shareOrder() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Order #@Model.Id',
+                    text: 'Check out my order from Blue Archive',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback - copy to clipboard
+                navigator.clipboard.writeText(window.location.href).then(function() {
+                    alert('Order link copied to clipboard!');
+                });
+            }
+        }
+        
+        // Auto-refresh for pending/processing orders
+        $(document).ready(function() {
+            const status = '@Model.Status';
+            if (status === 'Pending' || status === 'Processing') {
+                setTimeout(function() {
+                    location.reload();
+                }, 60000); // Refresh every minute
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -22px;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 3px #e9ecef;
+        }
+        
+        .timeline-item.completed .timeline-marker {
+            box-shadow: 0 0 0 3px #007bff;
+        }
+        
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e9ecef;
+        }
+        
+        .timeline-item.completed .timeline-content {
+            border-left-color: #007bff;
+        }
+        
+        /* Card hover effects */
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Table styling */
+        .table td {
+            vertical-align: middle;
+        }
+        
+        /* Print styles */
+        @@media print {
+            .btn, .card-header, nav, .timeline {
+                display: none !important;
+            }
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+        
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .timeline {
+                padding-left: 20px;
+            }
+            
+            .timeline-marker {
+                left: -15px;
+                width: 20px;
+                height: 20px;
+            }
+            
+            .d-grid .btn {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+}

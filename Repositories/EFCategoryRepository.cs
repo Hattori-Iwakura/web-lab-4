@@ -16,7 +16,9 @@ namespace web_lab_4.Repositories
 
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories
+                .Include(c => c.Products)  // Add this line
+                .ToListAsync();
         }
 
         public async Task<Category> GetByIdAsync(int id)

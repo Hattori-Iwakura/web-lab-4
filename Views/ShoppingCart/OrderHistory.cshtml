@@ -1,0 +1,263 @@
+@* filepath: c:\Users\ASUS\Desktop\web-lab-4\Views\ShoppingCart\OrderHistory.cshtml *@
+@model IEnumerable<web_lab_4.Models.Order>
+
+@{
+    ViewData["Title"] = "Order History";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-history text-primary"></i> Order History
+                </h2>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i> Continue Shopping
+                </a>
+            </div>
+
+            @if (Model.Any())
+            {
+                @foreach (var order in Model)
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-receipt"></i> Order #@order.Id
+                                    </h5>
+                                    <small class="text-muted">Placed on @order.OrderDate.ToString("MMMM dd, yyyy 'at' hh:mm tt")</small>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="mb-2">
+                                        @switch (order.Status)
+                                        {
+                                            case "Pending":
+                                                <span class="badge bg-warning fs-6">
+                                                    <i class="fas fa-clock"></i> @order.Status
+                                                </span>
+                                                break;
+                                            case "Processing":
+                                                <span class="badge bg-primary fs-6">
+                                                    <i class="fas fa-cog fa-spin"></i> @order.Status
+                                                </span>
+                                                break;
+                                            case "Shipped":
+                                                <span class="badge bg-info fs-6">
+                                                    <i class="fas fa-shipping-fast"></i> @order.Status
+                                                </span>
+                                                break;
+                                            case "Completed":
+                                                <span class="badge bg-success fs-6">
+                                                    <i class="fas fa-check-circle"></i> @order.Status
+                                                </span>
+                                                break;
+                                            case "Cancelled":
+                                                <span class="badge bg-danger fs-6">
+                                                    <i class="fas fa-times-circle"></i> @order.Status
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary fs-6">@order.Status</span>
+                                                break;
+                                        }
+                                    </div>
+                                    <div class="text-muted">
+                                        <strong class="text-success">@order.TotalPrice.ToString("C")</strong>
+                                        <span class="mx-2">•</span>
+                                        <span>@order.OrderDetails.Sum(od => od.Quantity) items</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Order Items Preview -->
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="text-muted mb-3">Items in this order:</h6>
+                                    <div class="row">
+                                        @foreach (var detail in order.OrderDetails.Take(3))
+                                        {
+                                            <div class="col-md-4 mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(detail.Product?.ImageUrl))
+                                                    {
+                                                        <img src="@detail.Product.ImageUrl" alt="@detail.Product.Name" class="me-2 rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="me-2 bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                            <i class="fas fa-image text-muted"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <div class="fw-bold small">@detail.Product?.Name</div>
+                                                        <small class="text-muted">Qty: @detail.Quantity</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (order.OrderDetails.Count() > 3)
+                                        {
+                                            <div class="col-md-4 mb-3">
+                                                <div class="text-muted small">
+                                                    <i class="fas fa-plus-circle"></i> 
+                                                    @(order.OrderDetails.Count() - 3) more items
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-3">Shipping Address:</h6>
+                                    <p class="small mb-3">@order.ShippingAddress</p>
+                                    
+                                    @if (!string.IsNullOrEmpty(order.Notes))
+                                    {
+                                        <h6 class="text-muted mb-2">Notes:</h6>
+                                        <p class="small text-muted">@order.Notes</p>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Order Actions -->
+                            <div class="border-top pt-3 mt-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-3">
+                                                <strong>Total: @order.TotalPrice.ToString("C")</strong>
+                                            </span>
+                                            @if (order.Status == "Shipped")
+                                            {
+                                                <span class="badge bg-info me-2">
+                                                    <i class="fas fa-truck"></i> Tracking Available
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-md-end">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="OrderCompleted" asp-route-id="@order.Id" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </a>
+                                            @if (order.Status == "Completed")
+                                            {
+                                                <button class="btn btn-outline-success" onclick="reorderItems(@order.Id)">
+                                                    <i class="fas fa-redo"></i> Reorder
+                                                </button>
+                                            }
+                                            @if (order.Status == "Pending")
+                                            {
+                                                <button class="btn btn-outline-danger" onclick="cancelOrder(@order.Id)">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Pagination could be added here if needed -->
+                @if (Model.Count() > 10)
+                {
+                    <nav aria-label="Order history pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                            <li class="page-item active">
+                                <span class="page-link">1</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-shopping-bag fa-4x text-muted"></i>
+                    </div>
+                    <h4 class="text-muted">No Orders Yet</h4>
+                    <p class="text-muted mb-4">You haven't placed any orders yet. Start shopping to see your order history here!</p>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-bag"></i> Start Shopping
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function reorderItems(orderId) {
+            if (confirm('Add all items from this order to your cart?')) {
+                // Implementation for reordering
+                alert('Reorder functionality would be implemented here');
+            }
+        }
+        
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                // Implementation for order cancellation
+                alert('Order cancellation functionality would be implemented here');
+            }
+        }
+        
+        // Auto-refresh status for pending orders
+        $(document).ready(function() {
+            // Check for pending orders and auto-refresh every 30 seconds
+            const hasPendingOrders = $('.badge:contains("Pending")').length > 0;
+            if (hasPendingOrders) {
+                setTimeout(function() {
+                    location.reload();
+                }, 30000); // Refresh every 30 seconds
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .badge {
+            font-size: 0.8rem;
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        @@media (max-width: 768px) {
+            .btn-group {
+                width: 100%;
+            }
+            .btn-group .btn {
+                flex: 1;
+            }
+        }
+    </style>
+}

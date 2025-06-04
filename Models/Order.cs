@@ -28,6 +28,6 @@ namespace web_lab_4.Models
         public string Status { get; set; } = "Pending"; // Add this property
         
         // Navigation properties
-        public ICollection<OrderDetail>? OrderDetails { get; set; } = new List<OrderDetail>();
+        public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }
 }

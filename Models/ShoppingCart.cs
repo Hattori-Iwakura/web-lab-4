@@ -4,7 +4,7 @@ namespace web_lab_4.Models
     {
         public List<CartItem> Items { get; set; } = new List<CartItem>();
 
-        // Add item using Product object and quantity (updated for new properties)
+        // Add item using Product object and quantity (used in controller)
         public void AddItem(Product product, int quantity = 1)
         {
             var existingItem = Items.FirstOrDefault(i => i.ProductId == product.Id);
@@ -20,11 +20,7 @@ namespace web_lab_4.Models
                     ProductName = product.Name,
                     Price = product.Price,
                     Quantity = quantity,
-                    ImageUrl = product.ImageUrl,
-                    Weight = product.Weight,
-                    WeightUnit = product.WeightUnit,
-                    Flavor = product.Flavor,
-                    Brand = product.Brand
+                    ImageUrl = product.ImageUrl
                 });
             }
         }
@@ -68,12 +64,6 @@ namespace web_lab_4.Models
             return Items.Sum(i => i.Price * i.Quantity);
         }
 
-        // Calculate total weight
-        public decimal TotalWeight()
-        {
-            return Items.Sum(i => i.TotalWeight);
-        }
-
         // Get total item count
         public int TotalItems()
         {
@@ -90,12 +80,6 @@ namespace web_lab_4.Models
         public bool IsEmpty()
         {
             return !Items.Any();
-        }
-
-        // Get cart summary
-        public string GetCartSummary()
-        {
-            return $"{TotalItems()} items, {TotalWeight()}g, ${TotalPrice():F2}";
         }
     }
 }

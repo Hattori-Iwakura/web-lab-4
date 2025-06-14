@@ -1,31 +1,29 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using web_lab_4.Models;
-using web_lab_4.Services;
+using Microsoft.EntityFrameworkCore;
+using web_lab_4.Data;
+using web_lab_4.Models; // Add this line
+
 
 namespace web_lab_4.Controllers
 {
     public class ShoppingCartController : Controller
     {
-        private readonly IShoppingCartService _shoppingCartService;
-        private readonly IOrderService _orderService;
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private const string CART_KEY = "Cart";
 
-        public ShoppingCartController(
-            IShoppingCartService shoppingCartService,
-            IOrderService orderService,
-            UserManager<IdentityUser> userManager)
+        public ShoppingCartController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
-            _shoppingCartService = shoppingCartService;
-            _orderService = orderService;
+            _context = context;
             _userManager = userManager;
         }
 
         // Display shopping cart
         public IActionResult Index()
         {
-            var cart = _shoppingCartService.GetCart(HttpContext);
+            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY) ?? new ShoppingCart();
             return View(cart);
         }
 
@@ -33,15 +31,17 @@ namespace web_lab_4.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
-            try
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
             {
-                await _shoppingCartService.AddToCartAsync(HttpContext, productId, quantity);
-                TempData["SuccessMessage"] = "Product has been added to your cart!";
+                return NotFound();
             }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-            }
+
+            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY) ?? new ShoppingCart();
+            cart.AddItem(product, quantity);
+            HttpContext.Session.SetObjectAsJson(CART_KEY, cart);
+
+            TempData["SuccessMessage"] = $"{product.Name} has been added to your cart!";
             return RedirectToAction("Index", "Product");
         }
 
@@ -49,14 +49,18 @@ namespace web_lab_4.Controllers
         [HttpPost]
         public IActionResult UpdateQuantity(int productId, int quantity)
         {
-            try
+            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
+            if (cart != null)
             {
-                _shoppingCartService.UpdateQuantity(HttpContext, productId, quantity);
-                TempData["SuccessMessage"] = "Cart updated successfully!";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
+                if (quantity <= 0)
+                {
+                    cart.RemoveItem(productId);
+                }
+                else
+                {
+                    cart.UpdateQuantity(productId, quantity);
+                }
+                HttpContext.Session.SetObjectAsJson(CART_KEY, cart);
             }
             return RedirectToAction("Index");
         }
@@ -65,14 +69,11 @@ namespace web_lab_4.Controllers
         [HttpPost]
         public IActionResult RemoveFromCart(int productId)
         {
-            try
+            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
+            if (cart != null)
             {
-                _shoppingCartService.RemoveFromCart(HttpContext, productId);
-                TempData["SuccessMessage"] = "Item removed from cart!";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
+                cart.RemoveItem(productId);
+                HttpContext.Session.SetObjectAsJson(CART_KEY, cart);
             }
             return RedirectToAction("Index");
         }
@@ -81,15 +82,15 @@ namespace web_lab_4.Controllers
         [HttpPost]
         public IActionResult ClearCart()
         {
-            _shoppingCartService.ClearCart(HttpContext);
-            TempData["SuccessMessage"] = "Cart cleared!";
+            HttpContext.Session.Remove(CART_KEY);
             return RedirectToAction("Index");
         }
 
         // Get cart count for navbar
         public IActionResult GetCartCount()
         {
-            var count = _shoppingCartService.GetCartCount(HttpContext);
+            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
+            var count = cart?.Items.Sum(i => i.Quantity) ?? 0;
             return Json(new { count });
         }
 
@@ -97,7 +98,7 @@ namespace web_lab_4.Controllers
         [Authorize]
         public IActionResult Checkout()
         {
-            var cart = _shoppingCartService.GetCart(HttpContext);
+            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
             if (cart == null || !cart.Items.Any())
             {
                 TempData["ErrorMessage"] = "Your cart is empty. Please add some products before checkout.";
@@ -122,6 +123,14 @@ namespace web_lab_4.Controllers
         {
             try
             {
+                var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
+                if (cart == null || !cart.Items.Any())
+                {
+                    TempData["ErrorMessage"] = "Your cart is empty. Please add some products before checkout.";
+                    return RedirectToAction("Index");
+                }
+
+                // Get current user
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
                 {
@@ -129,83 +138,127 @@ namespace web_lab_4.Controllers
                     return RedirectToAction("Login", "Account", new { area = "Identity" });
                 }
 
-                ModelState.Remove("UserId");
+                // Set UserId and clear its validation error
+                order.UserId = user.Id;
+                ModelState.Remove("UserId"); // Clear validation error for UserId
+                
+                // Set other properties that aren't from the form
+                order.OrderDate = DateTime.UtcNow;
+                order.Status = "Pending";
+                order.TotalPrice = cart.Items.Sum(i => i.Price * i.Quantity);
+
+                // Debug: Log what we're receiving
+                System.Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+                System.Console.WriteLine($"ShippingAddress: '{order.ShippingAddress}'");
+                System.Console.WriteLine($"UserId: '{order.UserId}'");
 
                 if (ModelState.IsValid)
                 {
-                    var processedOrder = await _shoppingCartService.ProcessCheckoutAsync(HttpContext, order, user);
+                    // Create order details
+                    var orderDetails = new List<OrderDetail>();
+                    foreach (var item in cart.Items)
+                    {
+                        orderDetails.Add(new OrderDetail
+                        {
+                            ProductId = item.ProductId,
+                            Quantity = item.Quantity,
+                            Price = item.Price
+                        });
+                    }
+                    order.OrderDetails = orderDetails;
+
+                    // Save order to database
+                    _context.Orders.Add(order);
+                    await _context.SaveChangesAsync();
+
+                    // Clear cart after successful order
+                    HttpContext.Session.Remove(CART_KEY);
+
                     TempData["SuccessMessage"] = "Your order has been placed successfully!";
-                    return View("OrderCompleted", processedOrder);
+                    return View("OrderCompleted", order);
+                }
+                else
+                {
+                    // Debug: Show validation errors
+                    foreach (var modelError in ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        System.Console.WriteLine($"Validation Error: {modelError.ErrorMessage}");
+                    }
+                    
+                    TempData["ErrorMessage"] = "Please correct the errors below.";
                 }
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                System.Console.WriteLine($"Checkout Error: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while processing your order. Please try again.";
             }
 
-            ViewBag.Cart = _shoppingCartService.GetCart(HttpContext);
+            // If we got this far, something failed, redisplay form
+            ViewBag.Cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
             return View(order);
         }
-
         // Order completion confirmation page
         [Authorize]
         public async Task<IActionResult> OrderCompleted(int id)
         {
-            try
-            {
-                var order = await _orderService.GetOrderWithDetailsAsync(id);
-                if (order == null) return NotFound();
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
 
-                var user = await _userManager.GetUserAsync(User);
-                if (!await _orderService.ValidateOrderOwnershipAsync(id, user.Id))
-                    return Forbid();
-
-                return View(order);
-            }
-            catch (Exception ex)
+            if (order == null)
             {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction("Index");
+                return NotFound();
             }
+
+            // Verify the order belongs to the current user
+            var user = await _userManager.GetUserAsync(User);
+            if (order.UserId != user.Id)
+            {
+                return Forbid();
+            }
+
+            return View(order);
         }
 
         // Show user's order history
         [Authorize]
         public async Task<IActionResult> OrderHistory()
         {
-            try
-            {
-                var user = await _userManager.GetUserAsync(User);
-                var orders = await _orderService.GetOrdersByUserIdAsync(user.Id);
-                return View(orders);
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-                return View(new List<Order>());
-            }
+            var user = await _userManager.GetUserAsync(User);
+            var orders = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .Where(o => o.UserId == user.Id)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            return View(orders);
         }
 
         // View order details
         [Authorize]
         public async Task<IActionResult> OrderDetail(int id)
         {
-            try
-            {
-                var order = await _orderService.GetOrderWithDetailsAsync(id);
-                if (order == null) return NotFound();
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
 
-                var user = await _userManager.GetUserAsync(User);
-                if (!await _orderService.ValidateOrderOwnershipAsync(id, user?.Id))
-                    return Forbid();
-
-                return View(order);
-            }
-            catch (Exception ex)
+            if (order == null)
             {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction("OrderHistory");
+                return NotFound();
             }
+
+            // Verify the order belongs to the current user
+            var user = await _userManager.GetUserAsync(User);
+            if (order.UserId != user?.Id)
+            {
+                return Forbid();
+            }
+
+            return View(order);
         }
     }
 }

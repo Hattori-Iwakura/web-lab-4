@@ -4,6 +4,8 @@ using web_lab_4.Models;
 using web_lab_4.Repositories;
 using web_lab_4.Data;
 using web_lab_4.Services;
+using web_lab_4.Core.Interface;
+using web_lab_4.Core.Manager;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IDashboardRepository, EFDashboardRepository>(); 
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
+builder.Services.AddScoped<ISessionManager, SessionManager>(); // Add this line
 // Add this if you have OrderRepository
 // builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
 builder.Services.AddMemoryCache(); // If not already added

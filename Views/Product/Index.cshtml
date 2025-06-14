@@ -249,7 +249,7 @@
                     @foreach (var product in Model)
                     {
                         <div class="col">
-                            <div class="card h-100 shadow-sm product-card">
+                            <div class="card h-100 shadow-sm product-card clickable-card" data-href="@Url.Action("Details", new { id = product.Id })">
                                 <div class="position-relative">
                                     @if (!string.IsNullOrEmpty(product.ImageUrl))
                                     {
@@ -332,28 +332,23 @@
                                     <!-- Action Buttons -->
                                     <div class="mt-auto">
                                         <div class="row g-1">
-                                            <div class="col-8">
+                                            <div class="col-12">
                                                 @if (product.IsAvailable && product.IsInStock && !product.IsExpired)
                                                 {
                                                     <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
                                                         <input type="hidden" name="productId" value="@product.Id" />
                                                         <input type="hidden" name="quantity" value="1" />
-                                                        <button type="submit" class="btn btn-primary btn-sm w-100">
-                                                            <i class="fas fa-cart-plus"></i> Add
+                                                        <button type="submit" class="btn btn-primary btn-sm w-100" onclick="event.stopPropagation();">
+                                                            <i class="fas fa-cart-plus"></i> Add to Cart
                                                         </button>
                                                     </form>
                                                 }
                                                 else
                                                 {
-                                                    <button class="btn btn-secondary btn-sm w-100" disabled>
+                                                    <button class="btn btn-secondary btn-sm w-100" disabled onclick="event.stopPropagation();">
                                                         <i class="fas fa-ban"></i> Unavailable
                                                     </button>
                                                 }
-                                            </div>
-                                            <div class="col-4">
-                                                <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary btn-sm w-100" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
                                             </div>
                                         </div>
                                         
@@ -361,13 +356,15 @@
                                         {
                                             <div class="row g-1 mt-1">
                                                 <div class="col-6">
-                                                    <a asp-area="Admin" asp-controller="Product" asp-action="Update" asp-route-id="@product.Id" class="btn btn-warning btn-sm w-100">
-                                                        <i class="fas fa-edit"></i>
+                                                    <a asp-area="Admin" asp-controller="Product" asp-action="Update" asp-route-id="@product.Id" 
+                                                       class="btn btn-warning btn-sm w-100" onclick="event.stopPropagation();">
+                                                        <i class="fas fa-edit"></i> Edit
                                                     </a>
                                                 </div>
                                                 <div class="col-6">
-                                                    <a asp-area="Admin" asp-controller="Product" asp-action="Delete" asp-route-id="@product.Id" class="btn btn-danger btn-sm w-100">
-                                                        <i class="fas fa-trash"></i>
+                                                    <a asp-area="Admin" asp-controller="Product" asp-action="Delete" asp-route-id="@product.Id" 
+                                                       class="btn btn-danger btn-sm w-100" onclick="event.stopPropagation();">
+                                                        <i class="fas fa-trash"></i> Delete
                                                     </a>
                                                 </div>
                                             </div>
@@ -523,6 +520,17 @@
 
 @section Scripts {
     <script>
+        // Make cards clickable
+        $(document).on('click', '.clickable-card', function(e) {
+            // Check if the click target is not a button or link
+            if (!$(e.target).is('button, a, input') && !$(e.target).closest('button, a, form').length) {
+                var href = $(this).data('href');
+                if (href) {
+                    window.location.href = href;
+                }
+            }
+        });
+
         // Clear search function
         function clearSearch() {
             $('input[name="searchTerm"]').val('');
@@ -539,6 +547,7 @@
         // Handle add to cart form submission
         $('.add-to-cart-form').on('submit', function(e) {
             e.preventDefault();
+            e.stopPropagation(); // Prevent card click
             
             const form = $(this);
             const submitBtn = form.find('button[type="submit"]');
@@ -643,6 +652,21 @@
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
         }
         
+        /* Clickable card styling */
+        .clickable-card {
+            cursor: pointer;
+        }
+        
+        .clickable-card:hover {
+            border-color: #007bff !important;
+        }
+        
+        /* Prevent buttons from inheriting card cursor */
+        .clickable-card button,
+        .clickable-card a {
+            cursor: pointer !important;
+        }
+        
         .card-img-top {
             transition: transform 0.3s ease;
         }
@@ -742,6 +766,11 @@
         /* Improve form controls */
         .form-select-sm, .form-control-sm {
             font-size: 0.875rem;
+        }
+        
+        /* Hover effect for clickable cards */
+        .clickable-card:hover .card-title {
+            color: #007bff;
         }
     </style>
 }

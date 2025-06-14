@@ -2,13 +2,13 @@
 @model web_lab_4.Models.Product
 
 @{
-    ViewData["Title"] = "Add New Product";
+    ViewData["Title"] = "Add Product";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
-        <i class="fas fa-plus-circle"></i> Add New Product
+        <i class="fas fa-plus"></i> Add New Product
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a asp-action="Index" class="btn btn-outline-secondary">
@@ -25,78 +25,162 @@
             </div>
             <div class="card-body">
                 <form asp-action="Add" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <!-- Basic Information -->
                     <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group mb-3">
-                                <label asp-for="Name" class="form-label">Product Name *</label>
-                                <input asp-for="Name" class="form-control" placeholder="Enter product name" />
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Name" class="control-label"></label>
+                                <input asp-for="Name" class="form-control" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label asp-for="Price" class="form-label">Price *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input asp-for="Price" class="form-control" type="number" step="0.01" placeholder="0.00" />
-                                </div>
-                                <span asp-validation-for="Price" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label asp-for="CategoryId" class="form-label">Category *</label>
+                            <div class="form-group">
+                                <label asp-for="CategoryId" class="control-label">Category</label>
                                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories">
-                                    <option value="">-- Select Category --</option>
+                                    <option value="">Select Category</option>
                                 </select>
                                 <span asp-validation-for="CategoryId" class="text-danger"></span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="Description" class="form-label">Description</label>
-                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter product description..."></textarea>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Price" class="control-label"></label>
+                                <input asp-for="Price" class="form-control" step="0.01" />
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Brand" class="control-label"></label>
+                                <input asp-for="Brand" class="form-control" />
+                                <span asp-validation-for="Brand" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weight and Flavor -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Weight" class="control-label"></label>
+                                <input asp-for="Weight" class="form-control" step="0.001" />
+                                <span asp-validation-for="Weight" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="WeightUnit" class="control-label">Weight Unit</label>
+                                <select asp-for="WeightUnit" class="form-control" asp-items="ViewBag.WeightUnits">
+                                </select>
+                                <span asp-validation-for="WeightUnit" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Flavor" class="control-label"></label>
+                                <input asp-for="Flavor" class="form-control" />
+                                <span asp-validation-for="Flavor" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stock and Expiry -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="StockQuantity" class="control-label">Stock Quantity</label>
+                                <input asp-for="StockQuantity" class="form-control" min="0" />
+                                <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ExpiryDate" class="control-label">Expiry Date</label>
+                                <input asp-for="ExpiryDate" class="form-control" type="date" />
+                                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label asp-for="Description" class="control-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
-                    <div class="form-group mb-4">
-                        <label for="imageUrl" class="form-label">Product Image</label>
-                        <input type="file" name="imageUrl" class="form-control" accept="image/*" />
-                        <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 5MB</div>
+                    <!-- Ingredients -->
+                    <div class="form-group">
+                        <label asp-for="Ingredients" class="control-label"></label>
+                        <textarea asp-for="Ingredients" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="Ingredients" class="text-danger"></span>
                     </div>
 
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a asp-action="Index" class="btn btn-secondary me-md-2">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Create Product
-                        </button>
+                    <!-- Nutritional Info -->
+                    <div class="form-group">
+                        <label asp-for="NutritionalInfo" class="control-label">Nutritional Information</label>
+                        <textarea asp-for="NutritionalInfo" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="NutritionalInfo" class="text-danger"></span>
+                    </div>
+
+                    <!-- Usage Instructions -->
+                    <div class="form-group">
+                        <label asp-for="UsageInstructions" class="control-label">Usage Instructions</label>
+                        <textarea asp-for="UsageInstructions" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="UsageInstructions" class="text-danger"></span>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label for="imageUrl" class="control-label">Product Image</label>
+                        <input type="file" name="imageUrl" class="form-control-file" accept="image/*" />
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="form-check">
+                        <input asp-for="IsAvailable" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsAvailable" class="form-check-label">
+                            Available for sale
+                        </label>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <input type="submit" value="Add Product" class="btn btn-primary" />
+                        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
+    
+    <!-- Quick Info Panel -->
     <div class="col-lg-4">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Tips</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Guidelines</h6>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
-                    <h6><i class="fas fa-info-circle"></i> Product Guidelines</h6>
-                    <ul class="mb-0">
-                        <li>Use clear, descriptive product names</li>
-                        <li>Upload high-quality images</li>
-                        <li>Write detailed descriptions</li>
-                        <li>Set competitive prices</li>
-                    </ul>
-                </div>
+                <h6>Product Information Tips:</h6>
+                <ul class="small">
+                    <li>Use clear, descriptive product names</li>
+                    <li>Include accurate weight and measurements</li>
+                    <li>Add detailed nutritional information</li>
+                    <li>Specify clear usage instructions</li>
+                    <li>Set appropriate expiry dates</li>
+                </ul>
+                
+                <h6 class="mt-3">Image Requirements:</h6>
+                <ul class="small">
+                    <li>Recommended size: 800x600px</li>
+                    <li>Format: JPG, PNG, WebP</li>
+                    <li>Max file size: 5MB</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -104,17 +188,4 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script>
-        // Image preview
-        document.querySelector('input[name="imageUrl"]').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // You can add image preview functionality here
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    </script>
 }

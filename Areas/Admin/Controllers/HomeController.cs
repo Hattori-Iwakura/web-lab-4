@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using web_lab_4.Data;
+using web_lab_4.Services;
 
 namespace web_lab_4.Areas.Admin.Controllers
 {
@@ -9,11 +8,13 @@ namespace web_lab_4.Areas.Admin.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class HomeController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProductService _productService;
+        private readonly IOrderService _orderService;
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(IProductService productService, IOrderService orderService)
         {
-            _context = context;
+            _productService = productService;
+            _orderService = orderService;
         }
 
         public IActionResult Index()
@@ -26,28 +27,31 @@ namespace web_lab_4.Areas.Admin.Controllers
         {
             try
             {
-                var totalProducts = await _context.Products.CountAsync();
-                var totalOrders = await _context.Orders.CountAsync();
-                var pendingOrders = await _context.Orders.CountAsync(o => o.Status == "Pending");
-                var monthlyRevenue = await _context.Orders
+                var products = await _productService.GetAllProductsAsync();
+                var orders = await _orderService.GetAllOrdersAsync();
+                
+                var totalProducts = products.Count();
+                var totalOrders = await _orderService.GetTotalOrdersCountAsync();
+                var pendingOrders = orders.Count(o => o.Status == "Pending");
+                var monthlyRevenue = orders
                     .Where(o => o.OrderDate.Month == DateTime.Now.Month && o.OrderDate.Year == DateTime.Now.Year)
-                    .SumAsync(o => o.TotalPrice);
+                    .Sum(o => o.TotalPrice);
 
-                var recentOrders = await _context.Orders
+                var recentOrders = orders
                     .OrderByDescending(o => o.OrderDate)
                     .Take(5)
                     .Select(o => new {
                         id = o.Id,
-                        customerName = o.UserId, // You might want to join with Users table for actual name
+                        customerName = o.UserId,
                         amount = o.TotalPrice,
                         status = o.Status,
                         date = o.OrderDate
                     })
-                    .ToListAsync();
+                    .ToList();
 
-                // Top selling products (this requires OrderDetails)
-                var topProducts = await _context.OrderDetails
-                    .Include(od => od.Product)
+                // Top selling products
+                var topProducts = orders
+                    .SelectMany(o => o.OrderDetails)
                     .GroupBy(od => od.Product.Name)
                     .Select(g => new {
                         name = g.Key,
@@ -56,7 +60,17 @@ namespace web_lab_4.Areas.Admin.Controllers
                     })
                     .OrderByDescending(p => p.salesCount)
                     .Take(4)
-                    .ToListAsync();
+                    .ToList();
+
+                // Low stock products
+                var lowStockProducts = products
+                    .Where(p => p.StockQuantity <= 10)
+                    .Select(p => new {
+                        name = p.Name,
+                        stock = p.StockQuantity,
+                        isExpired = p.IsExpired
+                    })
+                    .ToList();
 
                 return Json(new {
                     totalProducts,
@@ -64,7 +78,8 @@ namespace web_lab_4.Areas.Admin.Controllers
                     pendingOrders,
                     monthlyRevenue,
                     recentOrders,
-                    topProducts
+                    topProducts,
+                    lowStockProducts
                 });
             }
             catch (Exception ex)

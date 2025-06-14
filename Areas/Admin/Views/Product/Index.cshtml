@@ -8,25 +8,12 @@
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
-        <i class="fas fa-box"></i> Products Management
+        <i class="fas fa-boxes"></i> Products Management
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a asp-action="Add" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add New Product
-            </a>
-            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="fas fa-filter"></i> Filter
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">All Products</a></li>
-                <li><a class="dropdown-item" href="#">Active Products</a></li>
-                <li><a class="dropdown-item" href="#">Out of Stock</a></li>
-            </ul>
-        </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-download"></i> Export
-        </button>
+        <a asp-action="Add" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Product
+        </a>
     </div>
 </div>
 
@@ -37,27 +24,56 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Total Products
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count()</div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Products</div>
+                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count()</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Low Stock</div>
+                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count(p => p.StockQuantity <= 10)</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Expired Products</div>
+                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count(p => p.IsExpired)</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-success shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Active Products
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count()</div>
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Available Products</div>
+                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count(p => p.IsAvailable && p.IsInStock)</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-check-circle fa-2x text-gray-300"></i>
@@ -66,203 +82,140 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Categories
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Select(p => p.CategoryId).Distinct().Count()</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-tags fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Total Value
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Sum(p => p.Price).ToString("C")</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Search and Filter -->
+<!-- Products Table -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <div class="row">
-            <div class="col-md-6">
-                <h6 class="m-0 font-weight-bold text-primary">Product List</h6>
-            </div>
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search products..." id="searchInput">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="button">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <h6 class="m-0 font-weight-bold text-primary">Products List</h6>
     </div>
     <div class="card-body">
-        @if (Model.Any())
-        {
-            <div class="table-responsive">
-                <table class="table table-bordered" id="productsTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
-                                    {
-                                        <img src="@item.ImageUrl" alt="@item.Name" 
-                                             class="img-thumbnail" 
-                                             style="width: 60px; height: 60px; object-fit: cover;" />
-                                    }
-                                    else
-                                    {
-                                        <div class="bg-light d-flex align-items-center justify-content-center" 
-                                             style="width: 60px; height: 60px;">
-                                            <i class="fas fa-image text-muted"></i>
-                                        </div>
-                                    }
-                                </td>
-                                <td>
-                                    <div class="font-weight-bold">@item.Name</div>
-                                    @if (!string.IsNullOrEmpty(item.Description))
-                                    {
-                                        <small class="text-muted">@item.Description.Substring(0, Math.Min(50, item.Description.Length))...</small>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="font-weight-bold text-success">@item.Price.ToString("C")</span>
-                                </td>
-                                <td>
-                                    @if (item.Category != null)
-                                    {
-                                        <span class="badge bg-secondary">@item.Category.Name</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning text-dark">No Category</span>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="badge bg-success">Active</span>
-                                </td>
-                                <td>
-                                    <small class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy")</small>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group" aria-label="Product actions">
-                                        <a asp-action="Display" asp-route-id="@item.Id" 
-                                           class="btn btn-info btn-sm" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a asp-action="Update" asp-route-id="@item.Id" 
-                                           class="btn btn-warning btn-sm" title="Edit Product">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-danger btn-sm" 
-                                                onclick="confirmDelete(@item.Id, '@item.Name')" title="Delete Product">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Weight</th>
+                        <th>Stock</th>
+                        <th>Expiry</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="@(item.IsExpired ? "table-danger" : item.StockQuantity <= 10 ? "table-warning" : "")">
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.Name" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">
+                                }
+                                else
+                                {
+                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-image text-muted"></i>
                                     </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div class="text-center py-5">
-                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No Products Found</h4>
-                <p class="text-muted">Start by adding your first product to the inventory.</p>
-                <a asp-action="Add" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add First Product
-                </a>
-            </div>
-        }
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the product <strong id="productName"></strong>?</p>
-                <p class="text-muted">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a id="deleteConfirmBtn" href="#" class="btn btn-danger">Delete</a>
-            </div>
+                                }
+                            </td>
+                            <td>
+                                <strong class="text-dark">@item.Name</strong>
+                                @if (!string.IsNullOrEmpty(item.Brand))
+                                {
+                                    <br><small class="text-muted">@item.Brand</small>
+                                }
+                                @if (!string.IsNullOrEmpty(item.Flavor))
+                                {
+                                    <br><small class="badge bg-info text-dark">@item.Flavor</small>
+                                }
+                            </td>
+                            <td class="text-dark">@item.Category?.Name</td>
+                            <td class="text-dark">$@item.Price.ToString("F2")</td>
+                            <td class="text-dark">@item.DisplayWeight</td>
+                            <td>
+                                <span class="badge @(item.StockQuantity <= 0 ? "bg-danger" : item.StockQuantity <= 10 ? "bg-warning text-dark" : "bg-success")">
+                                    @item.StockQuantity
+                                </span>
+                            </td>
+                            <td>
+                                @if (item.ExpiryDate.HasValue)
+                                {
+                                    <span class="text-dark">@item.ExpiryDate.Value.ToString("dd/MM/yyyy")</span>
+                                    @if (item.IsExpired)
+                                    {
+                                        <br><small class="text-danger">Expired</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsAvailable)
+                                {
+                                    <span class="badge bg-success">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Unavailable</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Display" asp-route-id="@item.Id" class="btn btn-sm btn-info" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Update" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-@(item.IsAvailable ? "secondary" : "success")" 
+                                            onclick="toggleAvailability(@item.Id)" title="Toggle Availability">
+                                        <i class="fas fa-@(item.IsAvailable ? "eye-slash" : "eye")"></i>
+                                    </button>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase();
-            const tableRows = document.querySelectorAll('#productsTable tbody tr');
-            
-            tableRows.forEach(row => {
-                const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                const category = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-                
-                if (productName.includes(searchTerm) || category.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+        function toggleAvailability(productId) {
+            if (confirm('Are you sure you want to toggle this product availability?')) {
+                $.post('@Url.Action("ToggleAvailability")', { id: productId })
+                    .done(function(result) {
+                        if (result.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .fail(function() {
+                        alert('Error occurred while updating product availability.');
+                    });
+            }
+        }
+
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                "pageLength": 25,
+                "order": [[ 1, "asc" ]],
+                "columnDefs": [
+                    { "orderable": false, "targets": [0, 8] }
+                ]
             });
         });
-
-        // Delete confirmation
-        function confirmDelete(productId, productName) {
-            document.getElementById('productName').textContent = productName;
-            document.getElementById('deleteConfirmBtn').href = '@Url.Action("Delete", "Product")/' + productId;
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
-        }
     </script>
 }
 
@@ -284,5 +237,18 @@
     }
     .badge {
         font-size: 0.75em;
+    }
+    
+    /* Override any white text to black */
+    .text-gray-800, .text-white {
+        color: #333 !important;
+    }
+    
+    .card-body {
+        color: #333 !important;
+    }
+    
+    .table td, .table th {
+        color: #333 !important;
     }
 </style>

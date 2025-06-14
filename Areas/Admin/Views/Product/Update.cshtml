@@ -30,13 +30,22 @@
                 <form asp-action="Update" method="post" enctype="multipart/form-data">
                     <input asp-for="Id" type="hidden" />
                     <input asp-for="ImageUrl" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                     
+                    <!-- Basic Information -->
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label asp-for="Name" class="form-label">Product Name *</label>
                                 <input asp-for="Name" class="form-control" placeholder="Enter product name" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Brand" class="form-label">Brand</label>
+                                <input asp-for="Brand" class="form-control" placeholder="Enter brand name" />
+                                <span asp-validation-for="Brand" class="text-danger"></span>
                             </div>
                         </div>
                     </div>
@@ -63,16 +72,91 @@
                         </div>
                     </div>
 
+                    <!-- Weight and Flavor -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Weight" class="form-label">Weight *</label>
+                                <input asp-for="Weight" class="form-control" type="number" step="0.001" placeholder="0.000" />
+                                <span asp-validation-for="Weight" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="WeightUnit" class="form-label">Weight Unit</label>
+                                <select asp-for="WeightUnit" class="form-control" asp-items="ViewBag.WeightUnits">
+                                </select>
+                                <span asp-validation-for="WeightUnit" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Flavor" class="form-label">Flavor</label>
+                                <input asp-for="Flavor" class="form-control" placeholder="e.g., Chocolate, Vanilla" />
+                                <span asp-validation-for="Flavor" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stock and Expiry -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="StockQuantity" class="form-label">Stock Quantity *</label>
+                                <input asp-for="StockQuantity" class="form-control" type="number" min="0" />
+                                <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ExpiryDate" class="form-label">Expiry Date</label>
+                                <input asp-for="ExpiryDate" class="form-control" type="date" />
+                                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
                     <div class="form-group mb-3">
                         <label asp-for="Description" class="form-label">Description</label>
-                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter product description..."></textarea>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter product description..."></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
+                    <!-- Ingredients -->
+                    <div class="form-group mb-3">
+                        <label asp-for="Ingredients" class="form-label">Ingredients</label>
+                        <textarea asp-for="Ingredients" class="form-control" rows="2" placeholder="List main ingredients..."></textarea>
+                        <span asp-validation-for="Ingredients" class="text-danger"></span>
+                    </div>
+
+                    <!-- Nutritional Info -->
+                    <div class="form-group mb-3">
+                        <label asp-for="NutritionalInfo" class="form-label">Nutritional Information</label>
+                        <textarea asp-for="NutritionalInfo" class="form-control" rows="3" placeholder="e.g., Per 30g: 25g Protein, 1g Carbs, 0.5g Fat, 120 Calories"></textarea>
+                        <span asp-validation-for="NutritionalInfo" class="text-danger"></span>
+                    </div>
+
+                    <!-- Usage Instructions -->
+                    <div class="form-group mb-3">
+                        <label asp-for="UsageInstructions" class="form-label">Usage Instructions</label>
+                        <textarea asp-for="UsageInstructions" class="form-control" rows="2" placeholder="e.g., Mix 1 scoop with 250ml water or milk"></textarea>
+                        <span asp-validation-for="UsageInstructions" class="text-danger"></span>
+                    </div>
+
+                    <!-- Image Upload -->
                     <div class="form-group mb-4">
                         <label for="imageUrl" class="form-label">Update Product Image</label>
                         <input type="file" name="imageUrl" class="form-control" accept="image/*" />
-                        <div class="form-text">Leave empty to keep current image. Supported formats: JPG, PNG, GIF.</div>
+                        <div class="form-text">Leave empty to keep current image. Supported formats: JPG, PNG, GIF. Max size: 5MB.</div>
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="form-check mb-4">
+                        <input asp-for="IsAvailable" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsAvailable" class="form-check-label">
+                            Product is available for sale
+                        </label>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -89,6 +173,7 @@
     </div>
 
     <div class="col-lg-4">
+        <!-- Current Image -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Current Image</h6>
@@ -96,7 +181,7 @@
             <div class="card-body text-center">
                 @if (!string.IsNullOrEmpty(Model.ImageUrl))
                 {
-                    <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded" style="max-height: 200px;" />
+                    <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded shadow" style="max-height: 200px;" />
                 }
                 else
                 {
@@ -108,14 +193,80 @@
             </div>
         </div>
 
+        <!-- Product Quick Info -->
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Product Stats</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Product Info</h6>
             </div>
             <div class="card-body">
-                <p><strong>Product ID:</strong> #@Model.Id</p>
-                <p><strong>Created:</strong> @DateTime.Now.ToString("MMM dd, yyyy")</p>
-                <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Product ID:</strong></td>
+                        <td>#@Model.Id</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Current Weight:</strong></td>
+                        <td>@Model.DisplayWeight</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Current Stock:</strong></td>
+                        <td>
+                            <span class="badge @(Model.StockQuantity <= 0 ? "badge-danger" : Model.StockQuantity <= 10 ? "badge-warning" : "badge-success")">
+                                @Model.StockQuantity units
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>
+                            @if (Model.IsExpired)
+                            {
+                                <span class="badge badge-danger">Expired</span>
+                            }
+                            else if (Model.IsAvailable && Model.IsInStock)
+                            {
+                                <span class="badge badge-success">Available</span>
+                            }
+                            else if (!Model.IsAvailable)
+                            {
+                                <span class="badge badge-secondary">Unavailable</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-warning">Out of Stock</span>
+                            }
+                        </td>
+                    </tr>
+                    @if (Model.ExpiryDate.HasValue)
+                    {
+                        <tr>
+                            <td><strong>Expiry Date:</strong></td>
+                            <td>
+                                @Model.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                @if (Model.IsExpired)
+                                {
+                                    <br><small class="text-danger">Expired</small>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Update Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li>Update nutritional info when changing weight</li>
+                    <li>Check expiry date for accuracy</li>
+                    <li>Adjust stock quantity as needed</li>
+                    <li>Ensure flavor matches product</li>
+                    <li>Upload high-quality images (800x600px recommended)</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -123,4 +274,25 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Auto-calculate display weight
+        $('#Weight, #WeightUnit').on('change', function() {
+            var weight = $('#Weight').val();
+            var unit = $('#WeightUnit').val();
+            if (weight && unit) {
+                // You can add display logic here if needed
+            }
+        });
+
+        // Warn about expiry date
+        $('#ExpiryDate').on('change', function() {
+            var expiryDate = new Date($(this).val());
+            var today = new Date();
+            
+            if (expiryDate <= today) {
+                alert('Warning: The expiry date is in the past or today. This product will be marked as expired.');
+            }
+        });
+    </script>
 }

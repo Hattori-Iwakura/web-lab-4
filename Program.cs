@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using web_lab_4.Models;
 using web_lab_4.Repositories;
 using web_lab_4.Data;
+using web_lab_4.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +41,13 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddControllersWithViews();
-// Repository registrations
+// Register Services
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+// Keep existing Repository registrations
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
 // Add this if you have OrderRepository

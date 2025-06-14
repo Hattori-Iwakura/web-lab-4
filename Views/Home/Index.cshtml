@@ -275,7 +275,7 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
+ $(document).ready(function() {
             $('.add-to-cart-btn').on('click', function(e) {
                 e.preventDefault();
                 
@@ -293,33 +293,97 @@
                 $.ajax({
                     url: '/ShoppingCart/AddToCart',
                     type: 'POST',
+                    dataType: 'json', // Expect JSON response
                     data: {
                         productId: productId,
                         quantity: 1
                     },
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); // Mark as AJAX request
+                    },
                     success: function(response) {
-                        if (response && response.success) {
-                            button.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check me-1"></i>Added!');
+                        console.log('Response:', response); // Debug log
+                        
+                        if (response && response.success === true) {
+                            button.removeClass('btn-primary').addClass('btn-success')
+                                  .html('<i class="fas fa-check me-1"></i>Added!');
                             
                             setTimeout(function() {
-                                button.removeClass('btn-success').addClass('btn-primary').prop('disabled', false).html(originalText);
+                                button.removeClass('btn-success').addClass('btn-primary')
+                                      .prop('disabled', false).html(originalText);
                             }, 2000);
                             
+                            // Update cart count
                             if (window.updateCartCount) {
                                 window.updateCartCount();
+                            } else if (response.cartCount) {
+                                // Update cart badge if it exists
+                                $('.cart-count').text(response.cartCount);
                             }
+                            
+                            // Show success message
+                            showToast(response.message || 'Product added to cart!', 'success');
                         } else {
                             button.prop('disabled', false).html(originalText);
-                            alert('Error adding product to cart');
+                            showToast(response.message || 'Error adding product to cart', 'error');
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', xhr.responseText); // Debug log
                         button.prop('disabled', false).html(originalText);
-                        alert('Error adding product to cart. Please try again.');
+                        
+                        var errorMessage = 'Error adding product to cart. Please try again.';
+                        if (xhr.status === 404) {
+                            errorMessage = 'Product not found.';
+                        } else if (xhr.status === 400) {
+                            errorMessage = 'Invalid request.';
+                        }
+                        
+                        showToast(errorMessage, 'error');
                     }
                 });
             });
         });
+
+        // Toast notification function
+        function showToast(message, type) {
+            type = type || 'info';
+            
+            // Remove existing toasts
+            $('.toast').remove();
+            
+            var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            var icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+            
+            var toastHtml = '<div class="toast align-items-center text-white ' + bgClass + ' border-0" role="alert">' +
+                '<div class="d-flex">' +
+                    '<div class="toast-body">' +
+                        '<i class="fas fa-' + icon + ' me-2"></i>' + message +
+                    '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+                '</div>' +
+            '</div>';
+            
+            // Add toast container if it doesn't exist
+            if (!$('#toast-container').length) {
+                $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>');
+            }
+            
+            var $toast = $(toastHtml);
+            $('#toast-container').append($toast);
+            
+            // Show toast
+            var bsToast = new bootstrap.Toast($toast[0], {
+                autohide: true,
+                delay: 3000
+            });
+            bsToast.show();
+            
+            // Remove toast after hiding
+            $toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
     </script>
 }
 

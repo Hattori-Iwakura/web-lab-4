@@ -31,20 +31,52 @@ namespace web_lab_4.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
-            var product = await _context.Products.FindAsync(productId);
-            if (product == null)
+            try
             {
-                return NotFound();
+                var product = await _context.Products.FindAsync(productId);
+                if (product == null)
+                {
+                    return Json(new { success = false, message = "Product not found" });
+                }
+
+                // Check if product is available and in stock
+                if (!product.IsAvailable || !product.IsInStock)
+                {
+                    return Json(new { success = false, message = "Product is not available" });
+                }
+
+                var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY) ?? new ShoppingCart();
+                cart.AddItem(product, quantity);
+                HttpContext.Session.SetObjectAsJson(CART_KEY, cart);
+
+                // Return JSON for AJAX calls
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = $"{product.Name} has been added to your cart!",
+                        cartCount = cart.Items.Sum(i => i.Quantity)
+                    });
+                }
+
+                // Return redirect for normal form submissions
+                TempData["SuccessMessage"] = $"{product.Name} has been added to your cart!";
+                return RedirectToAction("Index", "Product");
             }
-
-            var cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY) ?? new ShoppingCart();
-            cart.AddItem(product, quantity);
-            HttpContext.Session.SetObjectAsJson(CART_KEY, cart);
-
-            TempData["SuccessMessage"] = $"{product.Name} has been added to your cart!";
-            return RedirectToAction("Index", "Product");
+            catch (Exception ex)
+            {
+                // Log the error
+                Console.WriteLine($"Error adding product to cart: {ex.Message}");
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "An error occurred while adding the product to cart" });
+                }
+                
+                TempData["ErrorMessage"] = "An error occurred while adding the product to cart";
+                return RedirectToAction("Index", "Product");
+            }
         }
-
         // Update item quantity in cart
         [HttpPost]
         public IActionResult UpdateQuantity(int productId, int quantity)

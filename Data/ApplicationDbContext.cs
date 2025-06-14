@@ -16,6 +16,7 @@ namespace web_lab_4.Data
         public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<Review> Reviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -87,6 +88,30 @@ namespace web_lab_4.Data
                 .WithMany()
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Review configuration
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                
+                entity.Property(r => r.Rating).IsRequired();
+                entity.Property(r => r.CreatedAt).IsRequired();
+                entity.Property(r => r.ReviewerName).IsRequired().HasMaxLength(100);
+                entity.Property(r => r.Comment).HasMaxLength(1000);
+                
+                entity.HasOne(r => r.Product)
+                      .WithMany(p => p.Reviews)
+                      .HasForeignKey(r => r.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.User)
+                      .WithMany()
+                      .HasForeignKey(r => r.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Ensure one review per user per product
+                entity.HasIndex(r => new { r.UserId, r.ProductId }).IsUnique();
+            });
         }
     }
 }

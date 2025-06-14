@@ -1,0 +1,384 @@
+<div class="product-reviews">
+    <div class="reviews-header">
+        <h4>Customer Reviews</h4>
+        <div class="rating-summary">
+            <div class="average-rating">
+                <span class="rating-number">0.0</span>
+                <div class="star-rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <span class="review-count">(0 reviews)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Review Form -->
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="add-review-section">
+            <h5>Write a Review</h5>
+            <form id="reviewForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="productId" value="@ViewBag.ProductId" />
+                
+                <div class="mb-3">
+                    <label class="form-label">Rating</label>
+                    <div class="star-input">
+                        <input type="radio" name="rating" value="5" id="star5">
+                        <label for="star5"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="rating" value="4" id="star4">
+                        <label for="star4"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="rating" value="3" id="star3">
+                        <label for="star3"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="rating" value="2" id="star2">
+                        <label for="star2"><i class="fas fa-star"></i></label>
+                        <input type="radio" name="rating" value="1" id="star1">
+                        <label for="star1"><i class="fas fa-star"></i></label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="comment" class="form-label">Comment (Optional)</label>
+                    <textarea class="form-control" id="comment" name="comment" rows="4" 
+                              placeholder="Share your experience with this product..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="login-prompt">
+            <p><a href="/Account/Login">Login</a> to write a review</p>
+        </div>
+    }
+
+    <!-- Reviews List -->
+    <div class="reviews-list">
+        <!-- Reviews will be loaded here via JavaScript -->
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .product-reviews {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .rating-summary {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .average-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rating-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffc107;
+        }
+
+        .star-rating i {
+            color: #ddd;
+            font-size: 1.2rem;
+        }
+
+        .star-rating i.active {
+            color: #ffc107;
+        }
+
+        .add-review-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .star-input {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 0.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .star-input input {
+            display: none;
+        }
+
+        .star-input label {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+
+        .star-input input:checked ~ label,
+        .star-input label:hover,
+        .star-input label:hover ~ label {
+            color: #ffc107;
+        }
+
+        .review-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .review-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .verified-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 0.2rem;
+        }
+
+        .review-comment {
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .login-prompt {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+
+        @@media (max-width: 768px) {
+            .review-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            var productId = $('#productId').val();
+            
+            if (productId) {
+                // Load existing reviews
+                loadProductReviews(productId);
+                
+                // Handle review form submission
+                $('#reviewForm').on('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var rating = $('input[name="rating"]:checked').val();
+                    var comment = $('#comment').val();
+                    
+                    if (!rating) {
+                        alert('Please select a rating');
+                        return;
+                    }
+                    
+                    var submitBtn = $(this).find('button[type="submit"]');
+                    var originalText = submitBtn.html();
+                    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Submitting...');
+                    
+                    $.ajax({
+                        url: '/Review/AddReview',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            productId: productId,
+                            rating: rating,
+                            comment: comment,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            submitBtn.prop('disabled', false).html(originalText);
+                            
+                            if (response.success) {
+                                showToast('Review added successfully!', 'success');
+                                $('#reviewForm')[0].reset();
+                                $('input[name="rating"]').prop('checked', false);
+                                loadProductReviews(productId); // Reload reviews
+                            } else {
+                                showToast(response.message || 'Error adding review', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            submitBtn.prop('disabled', false).html(originalText);
+                            var errorMsg = 'Error adding review. Please try again.';
+                            if (xhr.status === 401) {
+                                errorMsg = 'Please login to add a review.';
+                            }
+                            showToast(errorMsg, 'error');
+                        }
+                    });
+                });
+            }
+        });
+        
+        function loadProductReviews(productId) {
+            $.ajax({
+                url: '/Review/GetProductReviews',
+                type: 'GET',
+                data: { productId: productId },
+                success: function(response) {
+                    if (response.success) {
+                        updateRatingSummary(response.averageRating, response.reviewCount);
+                        displayReviews(response.reviews);
+                        
+                        // Update tab badge
+                        if (response.reviewCount > 0) {
+                            $('#reviews-tab').html('<i class="fas fa-star"></i> Reviews <span class="badge bg-primary ms-1">' + response.reviewCount + '</span>');
+                        } else {
+                            $('#reviews-tab').html('<i class="fas fa-star"></i> Reviews');
+                        }
+                    }
+                },
+                error: function() {
+                    console.error('Error loading reviews');
+                }
+            });
+        }
+        
+        function updateRatingSummary(averageRating, reviewCount) {
+            $('.rating-number').text(averageRating.toFixed(1));
+            $('.review-count').text('(' + reviewCount + ' review' + (reviewCount !== 1 ? 's' : '') + ')');
+            
+            // Update stars
+            $('.star-rating i').each(function(index) {
+                if (index < Math.round(averageRating)) {
+                    $(this).addClass('active');
+                } else {
+                    $(this).removeClass('active');
+                }
+            });
+        }
+        
+        function displayReviews(reviews) {
+            var reviewsHtml = '';
+            
+            if (reviews.length === 0) {
+                reviewsHtml = '<div class="no-reviews"><p class="text-muted text-center py-4">No reviews yet. Be the first to review this product!</p></div>';
+            } else {
+                reviews.forEach(function(review) {
+                    var starsHtml = '';
+                    for (var i = 1; i <= 5; i++) {
+                        starsHtml += '<i class="fas fa-star ' + (i <= review.rating ? 'active' : '') + '"></i>';
+                    }
+                    
+                    reviewsHtml += `
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <span class="reviewer-name">${review.reviewerName}</span>
+                                    ${review.isVerifiedPurchase ? '<span class="verified-badge">Verified Purchase</span>' : ''}
+                                </div>
+                                <div class="review-meta">
+                                    <div class="review-rating">${starsHtml}</div>
+                                    <span class="review-date">${review.createdAt}</span>
+                                </div>
+                            </div>
+                            ${review.comment ? `<div class="review-comment">${escapeHtml(review.comment)}</div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            $('.reviews-list').html(reviewsHtml);
+        }
+        
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+        
+        function showToast(message, type) {
+            type = type || 'info';
+            
+            // Remove existing toasts
+            $('.toast').remove();
+            
+            var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            var icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+            
+            var toastHtml = '<div class="toast align-items-center text-white ' + bgClass + ' border-0" role="alert">' +
+                '<div class="d-flex">' +
+                    '<div class="toast-body">' +
+                        '<i class="fas fa-' + icon + ' me-2"></i>' + message +
+                    '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+                '</div>' +
+            '</div>';
+            
+            // Add toast container if it doesn't exist
+            if (!$('#toast-container').length) {
+                $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>');
+            }
+            
+            var $toast = $(toastHtml);
+            $('#toast-container').append($toast);
+            
+            // Show toast
+            var bsToast = new bootstrap.Toast($toast[0], {
+                autohide: true,
+                delay: 4000
+            });
+            bsToast.show();
+            
+            // Remove toast after hiding
+            $toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+    </script>
+}

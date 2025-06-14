@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = Model.Name;
+    ViewBag.ProductId = Model.Id;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var category = ViewBag.Category as web_lab_4.Models.Category;
     var relatedProducts = ViewBag.RelatedProducts as List<web_lab_4.Models.Product>;
@@ -32,24 +33,33 @@
                 else
                 {
                     <div class="no-image d-flex align-items-center justify-content-center bg-light rounded shadow">
-                        <i class="fas fa-image fa-5x text-muted"></i>
+                        <i class="fas fa-dumbbell fa-5x text-muted"></i>
                     </div>
                 }
 
-                <!-- Image gallery (if you have multiple images) -->
-                @if (Model.Images != null && Model.Images.Any())
-                {
-                    <div class="image-gallery mt-3">
-                        <div class="row">
-                            @foreach (var image in Model.Images.Take(4))
-                            {
-                                <div class="col-3">
-                                    <img src="@image.Url" alt="@Model.Name" class="img-fluid gallery-thumb rounded" onclick="changeMainImage('@image.Url')">
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
+                <!-- Product Status Badges -->
+                <div class="product-badges">
+                    @if (!Model.IsAvailable)
+                    {
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-3">Unavailable</span>
+                    }
+                    else if (!Model.IsInStock)
+                    {
+                        <span class="badge bg-warning position-absolute top-0 start-0 m-3">Out of Stock</span>
+                    }
+                    else if (Model.IsExpired)
+                    {
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-3">Expired</span>
+                    }
+                    else if (Model.Price < 30)
+                    {
+                        <span class="badge bg-success position-absolute top-0 start-0 m-3">Best Value</span>
+                    }
+                    else if (Model.Price > 80)
+                    {
+                        <span class="badge bg-primary position-absolute top-0 start-0 m-3">Premium</span>
+                    }
+                </div>
             </div>
         </div>
 
@@ -59,89 +69,184 @@
                 <!-- Product Title -->
                 <h1 class="product-title mb-3">@Model.Name</h1>
 
-                <!-- Category Badge -->
-                @if (category != null)
-                {
-                    <div class="mb-3">
-                        <span class="badge bg-primary fs-6">
+                <!-- Brand and Category -->
+                <div class="product-meta mb-3">
+                    @if (!string.IsNullOrEmpty(Model.Brand))
+                    {
+                        <span class="badge bg-secondary me-2">
+                            <i class="fas fa-copyright"></i> @Model.Brand
+                        </span>
+                    }
+                    @if (category != null)
+                    {
+                        <span class="badge bg-primary">
                             <i class="fas fa-tag"></i> @category.Name
                         </span>
-                    </div>
-                }
+                    }
+                </div>
 
                 <!-- Price -->
                 <div class="price-section mb-4">
                     <h2 class="price text-success mb-0">@Model.Price.ToString("C")</h2>
-                    <small class="text-muted">Tax included</small>
+                    <small class="text-muted">Tax included • Free shipping on orders over $50</small>
                 </div>
 
-                <!-- Rating (placeholder - you can implement this later) -->
+                <!-- Rating -->
                 <div class="rating-section mb-4">
                     <div class="stars">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="far fa-star text-warning"></i>
-                        <span class="ms-2 text-muted">(4.0/5) - 23 reviews</span>
+                        @if (Model.ReviewCount > 0)
+                        {
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="fas fa-star @(i <= Math.Round(Model.AverageRating) ? "text-warning" : "text-muted")"></i>
+                            }
+                            <span class="ms-2 text-muted">(@Model.DisplayRating) - @Model.ReviewCount review@(Model.ReviewCount != 1 ? "s" : "")</span>
+                        }
+                        else
+                        {
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="far fa-star text-muted"></i>
+                            }
+                            <span class="ms-2 text-muted">No reviews yet</span>
+                        }
                     </div>
                 </div>
 
-                <!-- Description -->
-                <div class="description-section mb-4">
-                    <h5>Description</h5>
-                    <p class="text-muted">@Model.Description</p>
+                <!-- Stock Status -->
+                <div class="stock-section mb-4">
+                    @if (Model.IsAvailable && Model.IsInStock && !Model.IsExpired)
+                    {
+                        if (Model.StockQuantity > 20)
+                        {
+                            <div class="alert alert-success py-2">
+                                <i class="fas fa-check-circle"></i> In Stock (@Model.StockQuantity available)
+                            </div>
+                        }
+                        else if (Model.StockQuantity > 0)
+                        {
+                            <div class="alert alert-warning py-2">
+                                <i class="fas fa-exclamation-triangle"></i> Low Stock! Only @Model.StockQuantity left
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger py-2">
+                            <i class="fas fa-ban"></i> 
+                            @if (!Model.IsAvailable)
+                            {
+                                <span>Product not available</span>
+                            }
+                            else if (!Model.IsInStock)
+                            {
+                                <span>Out of stock</span>
+                            }
+                            else if (Model.IsExpired)
+                            {
+                                <span>Product expired</span>
+                            }
+                        </div>
+                    }
                 </div>
 
-                <!-- Product Details -->
-                <div class="product-details mb-4">
-                    <h5>Product Details</h5>
+                <!-- Product Details Summary -->
+                <div class="product-details-summary mb-4">
+                    <h5>Key Features</h5>
                     <ul class="list-unstyled">
-                        <li><strong>Product ID:</strong> #@Model.Id</li>
-                        <li><strong>Category:</strong> @(category?.Name ?? "Uncategorized")</li>
-                        <li><strong>Availability:</strong> <span class="text-success">In Stock</span></li>
-                        <li><strong>SKU:</strong> PRD-@Model.Id.ToString("D6")</li>
+                        @if (!string.IsNullOrEmpty(Model.Brand))
+                        {
+                            <li><i class="fas fa-copyright text-primary me-2"></i><strong>Brand:</strong> @Model.Brand</li>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Flavor))
+                        {
+                            <li><i class="fas fa-leaf text-success me-2"></i><strong>Flavor:</strong> @Model.Flavor</li>
+                        }
+                        @if (Model.Weight > 0)
+                        {
+                            <li><i class="fas fa-weight text-info me-2"></i><strong>Weight:</strong> @Model.DisplayWeight</li>
+                        }
+                        <li><i class="fas fa-layer-group text-warning me-2"></i><strong>Category:</strong> @(category?.Name ?? "General")</li>
+                        @if (Model.ExpiryDate.HasValue)
+                        {
+                            <li><i class="fas fa-calendar text-danger me-2"></i><strong>Expiry Date:</strong> @Model.ExpiryDate.Value.ToString("MMM dd, yyyy")</li>
+                        }
                     </ul>
                 </div>
 
+                <!-- Description Preview -->
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="description-preview mb-4">
+                        <h5>Description</h5>
+                        <p class="text-muted">
+                            @{
+                                string shortDescription = Model.Description.Length > 150 ? 
+                                    Model.Description.Substring(0, 150) + "..." : Model.Description;
+                            }
+                            @shortDescription
+                        </p>
+                    </div>
+                }
+
                 <!-- Add to Cart Section -->
-                <div class="add-to-cart-section">
-                    <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
-                        <input type="hidden" name="productId" value="@Model.Id" />
-                        
-                        <!-- Quantity Selector -->
-                        <div class="quantity-section mb-3">
-                            <label class="form-label">Quantity:</label>
-                            <div class="input-group quantity-input" style="max-width: 150px;">
-                                <button class="btn btn-outline-secondary" type="button" onclick="decreaseQuantity()">
-                                    <i class="fas fa-minus"></i>
+                @if (Model.IsAvailable && Model.IsInStock && !Model.IsExpired)
+                {
+                    <div class="add-to-cart-section">
+                        <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.Id" />
+                            
+                            <!-- Quantity Selector -->
+                            <div class="quantity-section mb-3">
+                                <label class="form-label">Quantity:</label>
+                                <div class="input-group quantity-input" style="max-width: 150px;">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="decreaseQuantity()">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" name="quantity" id="quantity" class="form-control text-center" 
+                                           value="1" min="1" max="@Math.Min(Model.StockQuantity, 10)">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Maximum @Math.Min(Model.StockQuantity, 10) per order</small>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="action-buttons">
+                                <button type="submit" class="btn btn-primary btn-lg me-2">
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
                                 </button>
-                                <input type="number" name="quantity" id="quantity" class="form-control text-center" value="1" min="1" max="10">
-                                <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity()">
-                                    <i class="fas fa-plus"></i>
+                                <button type="button" class="btn btn-outline-danger btn-lg" onclick="addToWishlist(@Model.Id)">
+                                    <i class="far fa-heart"></i> Wishlist
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- Action Buttons -->
-                        <div class="action-buttons">
-                            <button type="submit" class="btn btn-primary btn-lg me-2">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-lg" onclick="addToWishlist(@Model.Id)">
-                                <i class="far fa-heart"></i> Wishlist
-                            </button>
-                        </div>
-
-                        <div class="additional-actions mt-3">
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-success btn-lg" onclick="buyNow()">
-                                    <i class="fas fa-bolt"></i> Buy Now
-                                </button>
+                            <div class="additional-actions mt-3">
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-success btn-lg" onclick="buyNow()">
+                                        <i class="fas fa-bolt"></i> Buy Now
+                                    </button>
+                                </div>
                             </div>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="unavailable-section">
+                        <div class="alert alert-secondary">
+                            <h6><i class="fas fa-info-circle"></i> Product Unavailable</h6>
+                            <p class="mb-0">This product is currently not available for purchase. Please check back later or contact us for more information.</p>
                         </div>
-                    </form>
-                </div>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary" onclick="notifyWhenAvailable(@Model.Id)">
+                                <i class="fas fa-bell"></i> Notify When Available
+                            </button>
+                        </div>
+                    </div>
+                }
 
                 <!-- Social Share -->
                 <div class="social-share mt-4 pt-4 border-top">
@@ -177,49 +282,216 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="nutrition-tab" data-bs-toggle="tab" data-bs-target="#nutrition" type="button">
+                        <i class="fas fa-apple-alt"></i> Nutrition Info
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
                         <i class="fas fa-star"></i> Reviews
                     </button>
                 </li>
             </ul>
             <div class="tab-content" id="productTabContent">
+                <!-- Description Tab -->
                 <div class="tab-pane fade show active" id="description" role="tabpanel">
                     <div class="p-4">
                         <h5>Product Description</h5>
-                        <p>@Model.Description</p>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                        <p>@(Model.Description ?? "No description available for this product.")</p>
+                        
+                        @if (!string.IsNullOrEmpty(Model.Brand) || !string.IsNullOrEmpty(Model.Flavor))
+                        {
+                            <h6 class="mt-4">Product Features</h6>
+                            <ul>
+                                @if (!string.IsNullOrEmpty(Model.Brand))
+                                {
+                                    <li>Premium quality from <strong>@Model.Brand</strong></li>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Flavor))
+                                {
+                                    <li>Delicious <strong>@Model.Flavor</strong> flavor</li>
+                                }
+                                @if (Model.Weight > 0)
+                                {
+                                    <li>@Model.DisplayWeight per container</li>
+                                }
+                                <li>Fast and effective results</li>
+                                <li>Quality assured and lab tested</li>
+                            </ul>
+                        }
                     </div>
                 </div>
+
+                <!-- Specifications Tab -->
                 <div class="tab-pane fade" id="specifications" role="tabpanel">
                     <div class="p-4">
-                        <h5>Specifications</h5>
+                        <h5>Product Specifications</h5>
                         <table class="table table-striped">
-                            <tr><td><strong>Brand</strong></td><td>Blue Archive</td></tr>
-                            <tr><td><strong>Model</strong></td><td>@Model.Name</td></tr>
-                            <tr><td><strong>Category</strong></td><td>@(category?.Name ?? "General")</td></tr>
-                            <tr><td><strong>Price</strong></td><td>@Model.Price.ToString("C")</td></tr>
-                            <tr><td><strong>Availability</strong></td><td>In Stock</td></tr>
+                            <tbody>
+                                <tr><td><strong>Product ID</strong></td><td>#@Model.Id</td></tr>
+                                <tr><td><strong>Name</strong></td><td>@Model.Name</td></tr>
+                                @if (!string.IsNullOrEmpty(Model.Brand))
+                                {
+                                    <tr><td><strong>Brand</strong></td><td>@Model.Brand</td></tr>
+                                }
+                                <tr><td><strong>Category</strong></td><td>@(category?.Name ?? "General")</td></tr>
+                                @if (!string.IsNullOrEmpty(Model.Flavor))
+                                {
+                                    <tr><td><strong>Flavor</strong></td><td>@Model.Flavor</td></tr>
+                                }
+                                @if (Model.Weight > 0)
+                                {
+                                    <tr><td><strong>Net Weight</strong></td><td>@Model.DisplayWeight</td></tr>
+                                }
+                                <tr><td><strong>Price</strong></td><td>@Model.Price.ToString("C")</td></tr>
+                                @if (Model.ExpiryDate.HasValue)
+                                {
+                                    <tr><td><strong>Expiry Date</strong></td><td>@Model.ExpiryDate.Value.ToString("MMMM dd, yyyy")</td></tr>
+                                }
+                                <tr><td><strong>Stock Status</strong></td><td>
+                                    @if (Model.IsInStock)
+                                    {
+                                        <span class="badge bg-success">In Stock (@Model.StockQuantity available)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Out of Stock</span>
+                                    }
+                                </td></tr>
+                                <tr><td><strong>Availability</strong></td><td>
+                                    @if (Model.IsAvailable && !Model.IsExpired)
+                                    {
+                                        <span class="badge bg-success">Available</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Unavailable</span>
+                                    }
+                                </td></tr>
+                                <tr><td><strong>SKU</strong></td><td>SUP-@Model.Id.ToString("D6")</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- Nutrition Info Tab -->
+                <div class="tab-pane fade" id="nutrition" role="tabpanel">
+                    <div class="p-4">
+                        <h5>Nutrition Information</h5>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Nutrition information may vary by flavor and batch. Please refer to product packaging for the most accurate information.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Typical Values per Serving</h6>
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr><td>Calories</td><td>120 kcal</td></tr>
+                                        <tr><td>Protein</td><td>25g</td></tr>
+                                        <tr><td>Carbohydrates</td><td>3g</td></tr>
+                                        <tr><td>Fat</td><td>1g</td></tr>
+                                        <tr><td>Fiber</td><td>1g</td></tr>
+                                        <tr><td>Sugar</td><td>2g</td></tr>
+                                        <tr><td>Sodium</td><td>150mg</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Key Ingredients</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success"></i> Whey Protein Isolate</li>
+                                    <li><i class="fas fa-check text-success"></i> Natural Flavors</li>
+                                    <li><i class="fas fa-check text-success"></i> Lecithin</li>
+                                    <li><i class="fas fa-check text-success"></i> Stevia Extract</li>
+                                </ul>
+                                
+                                <h6 class="mt-3">Allergen Information</h6>
+                                <p class="small text-muted">Contains: Milk, Soy. May contain traces of eggs, nuts, and gluten.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
                 <div class="tab-pane fade" id="reviews" role="tabpanel">
                     <div class="p-4">
-                        <h5>Customer Reviews</h5>
-                        <div class="review-item mb-3 p-3 border rounded">
-                            <div class="d-flex justify-content-between">
-                                <strong>John Doe</strong>
-                                <div class="stars">
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
+                        <div class="reviews-header">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5>Customer Reviews</h5>
+                                <div class="rating-summary">
+                                    <div class="average-rating">
+                                        <span class="rating-number">@(Model.ReviewCount > 0 ? Model.AverageRating.ToString("F1") : "0.0")</span>
+                                        <div class="star-rating ms-2">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fas fa-star @(i <= Math.Round(Model.AverageRating) ? "active" : "")"></i>
+                                            }
+                                        </div>
+                                        <span class="review-count ms-2 text-muted">(@Model.ReviewCount review@(Model.ReviewCount != 1 ? "s" : ""))</span>
+                                    </div>
                                 </div>
                             </div>
-                            <small class="text-muted">2 days ago</small>
-                            <p class="mt-2">Great product! Highly recommended.</p>
                         </div>
-                        <button class="btn btn-outline-primary">Write a Review</button>
+
+                        <!-- Add Review Form -->
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="add-review-section bg-light p-4 rounded mb-4">
+                                <h6>Write a Review</h6>
+                                <form id="reviewForm">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" id="productId" value="@Model.Id" />
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Rating</label>
+                                        <div class="star-input">
+                                            <input type="radio" name="rating" value="5" id="star5">
+                                            <label for="star5">★</label>
+                                            <input type="radio" name="rating" value="4" id="star4">
+                                            <label for="star4">★</label>
+                                            <input type="radio" name="rating" value="3" id="star3">
+                                            <label for="star3">★</label>
+                                            <input type="radio" name="rating" value="2" id="star2">
+                                            <label for="star2">★</label>
+                                            <input type="radio" name="rating" value="1" id="star1">
+                                            <label for="star1">★</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="reviewComment" class="form-label">Comment (Optional)</label>
+                                        <textarea class="form-control" id="reviewComment" name="comment" rows="4" 
+                                                  placeholder="Share your experience with this product..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-star me-2"></i>Submit Review
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="login-prompt text-center p-4 bg-light rounded mb-4">
+                                <p class="mb-3">
+                                    <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                </p>
+                                <p class="mb-3">Please login to write a review for this product</p>
+                                <a href="/Account/Login" class="btn btn-outline-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to Review
+                                </a>
+                            </div>
+                        }
+
+                        <!-- Reviews List -->
+                        <div class="reviews-list">
+                            <div class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Loading reviews...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -233,9 +505,9 @@
             <div class="col-12">
                 <h3 class="mb-4">Related Products</h3>
                 <div class="row">
-                    @foreach (var relatedProduct in relatedProducts)
+                    @foreach (var relatedProduct in relatedProducts.Take(4))
                     {
-                        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="col-lg-3 col-md-6 mb-4">
                             <div class="card product-card h-100">
                                 <div class="card-img-container">
                                     @if (!string.IsNullOrEmpty(relatedProduct.ImageUrl))
@@ -245,17 +517,42 @@
                                     else
                                     {
                                         <div class="no-image-placeholder">
-                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                            <i class="fas fa-dumbbell fa-3x text-muted"></i>
                                         </div>
                                     }
                                 </div>
                                 <div class="card-body d-flex flex-column">
                                     <h6 class="card-title">@relatedProduct.Name</h6>
-                                    <p class="card-text text-muted small flex-grow-1">@relatedProduct.Description?.Substring(0, Math.Min(relatedProduct.Description.Length, 60))...</p>
+                                    @if (!string.IsNullOrEmpty(relatedProduct.Brand))
+                                    {
+                                        <small class="text-muted">@relatedProduct.Brand</small>
+                                    }
+                                    
+                                    <!-- Product Rating -->
+                                    <div class="product-rating my-2">
+                                        @if (relatedProduct.ReviewCount > 0)
+                                        {
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fas fa-star @(i <= Math.Round(relatedProduct.AverageRating) ? "text-warning" : "text-muted")"></i>
+                                            }
+                                            <small class="text-muted ms-1">(@relatedProduct.ReviewCount)</small>
+                                        }
+                                        else
+                                        {
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="far fa-star text-muted"></i>
+                                            }
+                                        }
+                                    </div>
+                                    
                                     <div class="mt-auto">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="price text-success fw-bold">@relatedProduct.Price.ToString("C")</span>
-                                            <a asp-action="Details" asp-route-id="@relatedProduct.Id" class="btn btn-outline-primary btn-sm">View</a>
+                                            <a asp-action="Details" asp-route-id="@relatedProduct.Id" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -289,12 +586,7 @@
             }
         }
 
-        // Image gallery
-        function changeMainImage(imageSrc) {
-            document.getElementById('mainImage').src = imageSrc;
-        }
-
-        // Add to cart with animation
+        // Add to cart with AJAX
         $('.add-to-cart-form').on('submit', function(e) {
             e.preventDefault();
             
@@ -307,27 +599,42 @@
             btn.prop('disabled', true);
             
             $.ajax({
-                url: $(form).attr('action'),
+                url: '/ShoppingCart/AddToCart',
                 type: 'POST',
+                dataType: 'json',
                 data: $(form).serialize(),
                 success: function(response) {
-                    btn.html('<i class="fas fa-check"></i> Added!');
-                    btn.removeClass('btn-primary').addClass('btn-success');
-                    
-                    // Show success message
-                    showToast('Product added to cart successfully!', 'success');
-                    
-                    // Reset button after 2 seconds
-                    setTimeout(function() {
+                    if (response && response.success) {
+                        btn.html('<i class="fas fa-check"></i> Added!');
+                        btn.removeClass('btn-primary').addClass('btn-success');
+                        
+                        showToast('Product added to cart successfully!', 'success');
+                        
+                        // Update cart count if function exists
+                        if (window.updateCartCount) {
+                            window.updateCartCount();
+                        }
+                        
+                        // Reset button after 2 seconds
+                        setTimeout(function() {
+                            btn.html(originalText);
+                            btn.removeClass('btn-success').addClass('btn-primary');
+                            btn.prop('disabled', false);
+                        }, 2000);
+                    } else {
                         btn.html(originalText);
-                        btn.removeClass('btn-success').addClass('btn-primary');
                         btn.prop('disabled', false);
-                    }, 2000);
+                        showToast(response.message || 'Error adding product to cart', 'error');
+                    }
                 },
-                error: function() {
+                error: function(xhr) {
                     btn.html(originalText);
                     btn.prop('disabled', false);
-                    showToast('Error adding product to cart. Please try again.', 'error');
+                    var errorMsg = 'Error adding product to cart. Please try again.';
+                    if (xhr.status === 401) {
+                        errorMsg = 'Please login to add items to cart.';
+                    }
+                    showToast(errorMsg, 'error');
                 }
             });
         });
@@ -339,14 +646,20 @@
             
             // Add to cart first, then redirect to checkout
             $.ajax({
-                url: '@Url.Action("AddToCart", "ShoppingCart")',
+                url: '/ShoppingCart/AddToCart',
                 type: 'POST',
+                dataType: 'json',
                 data: {
                     productId: productId,
-                    quantity: quantity
+                    quantity: quantity,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                 },
-                success: function() {
-                    window.location.href = '@Url.Action("Checkout", "ShoppingCart")';
+                success: function(response) {
+                    if (response && response.success) {
+                        window.location.href = '/ShoppingCart/Index';
+                    } else {
+                        showToast('Error processing order. Please try again.', 'error');
+                    }
                 },
                 error: function() {
                     showToast('Error processing order. Please try again.', 'error');
@@ -356,8 +669,12 @@
 
         // Wishlist functionality
         function addToWishlist(productId) {
-            // Implement wishlist functionality
             showToast('Wishlist functionality coming soon!', 'info');
+        }
+
+        // Notify when available
+        function notifyWhenAvailable(productId) {
+            showToast('We will notify you when this product becomes available!', 'info');
         }
 
         // Social sharing
@@ -368,7 +685,7 @@
 
         function shareOnTwitter() {
             const url = encodeURIComponent(window.location.href);
-            const text = encodeURIComponent('@Model.Name - Check out this amazing product!');
+            const text = encodeURIComponent('@Model.Name - Check out this amazing supplement!');
             window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
         }
 
@@ -380,41 +697,201 @@
 
         // Toast notification function
         function showToast(message, type = 'info') {
-            // Create toast HTML
             const toastHtml = `
                 <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0" role="alert">
                     <div class="d-flex">
-                        <div class="toast-body">${message}</div>
+                        <div class="toast-body">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                            ${message}
+                        </div>
                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                     </div>
                 </div>
             `;
             
-            // Add to toast container
             let toastContainer = document.querySelector('.toast-container');
             if (!toastContainer) {
                 toastContainer = document.createElement('div');
                 toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastContainer.style.zIndex = '1080';
                 document.body.appendChild(toastContainer);
             }
             
             toastContainer.insertAdjacentHTML('beforeend', toastHtml);
             
-            // Show toast
             const toastElement = toastContainer.lastElementChild;
             const toast = new bootstrap.Toast(toastElement);
             toast.show();
             
-            // Remove toast after hiding
             toastElement.addEventListener('hidden.bs.toast', () => {
                 toastElement.remove();
             });
+        }
+
+        // Reviews functionality
+        $(document).ready(function() {
+            loadProductReviews(@Model.Id);
+            
+            $('#reviews-tab').on('shown.bs.tab', function() {
+                loadProductReviews(@Model.Id);
+            });
+            
+            $('#reviewForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var rating = $('input[name="rating"]:checked').val();
+                var comment = $('#reviewComment').val().trim();
+                
+                if (!rating) {
+                    showToast('Please select a rating', 'error');
+                    return;
+                }
+                
+                var submitBtn = $(this).find('button[type="submit"]');
+                var originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Submitting...');
+                
+                $.ajax({
+                    url: '/Review/AddReview',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        productId: @Model.Id,
+                        rating: rating,
+                        comment: comment,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        submitBtn.prop('disabled', false).html(originalText);
+                        
+                        if (response.success) {
+                            showToast('Review added successfully!', 'success');
+                            $('#reviewForm')[0].reset();
+                            $('input[name="rating"]').prop('checked', false);
+                            loadProductReviews(@Model.Id);
+                        } else {
+                            showToast(response.message || 'Error adding review', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        submitBtn.prop('disabled', false).html(originalText);
+                        var errorMsg = 'Error adding review. Please try again.';
+                        if (xhr.status === 401) {
+                            errorMsg = 'Please login to add a review.';
+                        } else if (xhr.status === 400) {
+                            errorMsg = 'You have already reviewed this product.';
+                        }
+                        showToast(errorMsg, 'error');
+                    }
+                });
+            });
+        });
+
+        function loadProductReviews(productId) {
+            $('.reviews-list').html(`
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">Loading reviews...</p>
+                </div>
+            `);
+            
+            $.ajax({
+                url: '/Review/GetProductReviews',
+                type: 'GET',
+                data: { productId: productId },
+                success: function(response) {
+                    if (response.success) {
+                        updateRatingSummary(response.averageRating, response.reviewCount);
+                        displayReviews(response.reviews);
+                    } else {
+                        $('.reviews-list').html('<div class="alert alert-warning">Unable to load reviews at this time.</div>');
+                    }
+                },
+                error: function() {
+                    $('.reviews-list').html('<div class="alert alert-danger">Error loading reviews. Please try again later.</div>');
+                }
+            });
+        }
+
+        function updateRatingSummary(averageRating, reviewCount) {
+            $('.rating-number').text(averageRating > 0 ? averageRating.toFixed(1) : '0.0');
+            $('.review-count').text('(' + reviewCount + ' review' + (reviewCount !== 1 ? 's' : '') + ')');
+            
+            $('.star-rating i').each(function(index) {
+                if (index < Math.round(averageRating)) {
+                    $(this).addClass('active');
+                } else {
+                    $(this).removeClass('active');
+                }
+            });
+            
+            if (reviewCount > 0) {
+                $('#reviews-tab').html('<i class="fas fa-star"></i> Reviews <span class="badge bg-primary ms-1">' + reviewCount + '</span>');
+            } else {
+                $('#reviews-tab').html('<i class="fas fa-star"></i> Reviews');
+            }
+        }
+
+        function displayReviews(reviews) {
+            var reviewsHtml = '';
+            
+            if (reviews.length === 0) {
+                reviewsHtml = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-star-half-alt fa-3x text-muted mb-3"></i>
+                        <h6>No reviews yet</h6>
+                        <p class="text-muted">Be the first to review this product!</p>
+                    </div>
+                `;
+            } else {
+                reviews.forEach(function(review) {
+                    var starsHtml = '';
+                    for (var i = 1; i <= 5; i++) {
+                        starsHtml += '<i class="fas fa-star ' + (i <= review.rating ? 'text-warning' : 'text-muted') + '"></i>';
+                    }
+                    
+                    reviewsHtml += `
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <i class="fas fa-user-circle fa-lg text-muted me-2"></i>
+                                    <div>
+                                        <div class="reviewer-name">${escapeHtml(review.reviewerName)}</div>
+                                        <small class="review-date">${review.createdAt}</small>
+                                    </div>
+                                    ${review.isVerifiedPurchase ? '<span class="verified-badge ms-2">Verified Purchase</span>' : ''}
+                                </div>
+                                <div class="review-rating">${starsHtml}</div>
+                            </div>
+                            ${review.comment ? `<div class="review-comment">${escapeHtml(review.comment)}</div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            $('.reviews-list').html(reviewsHtml);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
     </script>
 }
 
 @section Styles {
     <style>
+        .product-badges {
+            position: relative;
+        }
+
         .main-product-image {
             width: 100%;
             height: 500px;
@@ -427,18 +904,6 @@
             height: 500px;
         }
 
-        .gallery-thumb {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .gallery-thumb:hover {
-            opacity: 0.7;
-        }
-
         .product-title {
             color: #2c3e50;
             font-weight: 600;
@@ -447,6 +912,10 @@
         .price {
             font-size: 2rem;
             font-weight: 700;
+        }
+
+        .product-meta .badge {
+            font-size: 0.8rem;
         }
 
         .quantity-input input {
@@ -497,33 +966,150 @@
             color: #ffc107;
         }
 
-        .social-buttons .btn {
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
         .tab-content {
             border: 1px solid #dee2e6;
             border-top: none;
         }
 
+        /* Review Styles */
+        .reviews-header {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-summary {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .average-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rating-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffc107;
+        }
+
+        .star-rating i {
+            color: #ddd;
+            font-size: 1.1rem;
+        }
+
+        .star-rating i.active {
+            color: #ffc107;
+        }
+
+        .star-input {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 0.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .star-input input {
+            display: none;
+        }
+
+        .star-input label {
+            cursor: pointer;
+            font-size: 1.8rem;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+
+        .star-input input:checked ~ label,
+        .star-input label:hover,
+        .star-input label:hover ~ label {
+            color: #ffc107;
+        }
+
         .review-item {
-            background: #f8f9fa;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .review-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .review-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .verified-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 0.1rem;
+        }
+
+        .review-comment {
+            color: #495057;
+            line-height: 1.6;
+            margin-top: 0.5rem;
+        }
+
+        .unavailable-section {
+            padding: 2rem 0;
         }
 
         @@media (max-width: 768px) {
+            .review-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .rating-summary {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
             .main-product-image {
                 height: 300px;
             }
 
-            .action-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .action-buttons .btn {
-                margin-right: 0;
+            .price {
+                font-size: 1.5rem;
             }
         }
     </style>

@@ -9,11 +9,16 @@ namespace web_lab_4.Controllers
     {
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
+        private readonly IReviewService _reviewService; // Thêm này
 
-        public ProductController(IProductService productService, ICategoryService categoryService)
+        public ProductController(
+            IProductService productService, 
+            ICategoryService categoryService,
+            IReviewService reviewService) // Thêm này
         {
             _productService = productService;
             _categoryService = categoryService;
+            _reviewService = reviewService; // Thêm này
         }
 
         public async Task<IActionResult> Index(
@@ -26,12 +31,12 @@ namespace web_lab_4.Controllers
             string sortBy = "",
             int page = 1)
         {
-            const int pageSize = 16; // 4 rows x 4 products
+            const int pageSize = 16;
 
             try
             {
-                // Get all products with includes
-                var allProducts = await _productService.GetAllProductsAsync();
+                // Get all products WITH REVIEWS
+                var allProducts = await _productService.GetAllProductsWithReviewsAsync(); // Cần method này
                 var products = allProducts.AsQueryable();
 
                 // Apply filters
@@ -96,6 +101,30 @@ namespace web_lab_4.Controllers
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToList();
+
+                // Load review stats for each product
+                foreach (var product in pagedProducts)
+                {
+                    if (_reviewService != null)
+                    {
+                        try
+                        {
+                            var stats = await _reviewService.GetProductRatingStatsAsync(product.Id);
+                            // Store stats in ViewData for this specific product
+                            ViewData[$"ReviewCount_{product.Id}"] = stats.reviewCount;
+                            ViewData[$"AverageRating_{product.Id}"] = stats.averageRating;
+                            ViewData[$"DisplayRating_{product.Id}"] = stats.averageRating > 0 
+                                ? stats.averageRating.ToString("F1") 
+                                : "No rating";
+                        }
+                        catch
+                        {
+                            ViewData[$"ReviewCount_{product.Id}"] = 0;
+                            ViewData[$"AverageRating_{product.Id}"] = 0.0;
+                            ViewData[$"DisplayRating_{product.Id}"] = "No rating";
+                        }
+                    }
+                }
 
                 // Get filter data from all products (not filtered)
                 var categories = await _categoryService.GetAllCategoriesAsync();
@@ -183,28 +212,57 @@ namespace web_lab_4.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
+            var product = await _productService.GetProductByIdAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            // Load category
+            product.Category = await _categoryService.GetCategoryByIdAsync(product.CategoryId);
+
+            // Load review statistics
+            if (_reviewService != null)
+            {
+                try
+                {
+                    var reviewStats = await _reviewService.GetProductRatingStatsAsync(id);
+                    ViewBag.ReviewCount = reviewStats.reviewCount;
+                    ViewBag.AverageRating = reviewStats.averageRating;
+                    ViewBag.DisplayRating = reviewStats.averageRating > 0 
+                        ? reviewStats.averageRating.ToString("F1") 
+                        : "No rating";
+                }
+                catch (Exception ex)
+                {
+                    // Log error and set defaults
+                    Console.WriteLine($"Error loading review stats: {ex.Message}");
+                    ViewBag.ReviewCount = 0;
+                    ViewBag.AverageRating = 0;
+                    ViewBag.DisplayRating = "No rating";
+                }
+            }
+            else
+            {
+                // Default values if ReviewService is not available
+                ViewBag.ReviewCount = 0;
+                ViewBag.AverageRating = 0;
+                ViewBag.DisplayRating = "No rating";
+            }
+
+            // Load related products (optional)
             try
             {
-                var product = await _productService.GetProductByIdAsync(id);
-                if (product == null) return NotFound();
-
-                // Get related products (same category, different product, available only)
                 var relatedProducts = await _productService.GetProductsByCategoryAsync(product.CategoryId);
-                var relatedProductsList = relatedProducts
-                    .Where(p => p.Id != id && p.IsAvailable && p.IsInStock && !p.IsExpired)
-                    .Take(4)
-                    .ToList();
-
-                ViewBag.RelatedProducts = relatedProductsList;
-                ViewBag.Category = await _categoryService.GetCategoryByIdAsync(product.CategoryId);
-
-                return View(product);
+                ViewBag.RelatedProducts = relatedProducts?.Where(p => p.Id != id).Take(4).ToList();
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error loading product details: " + ex.Message;
-                return RedirectToAction(nameof(Index));
+                Console.WriteLine($"Error loading related products: {ex.Message}");
+                ViewBag.RelatedProducts = new List<Product>();
             }
+
+            return View(product);
         }
 
         public async Task<IActionResult> Update(int id)

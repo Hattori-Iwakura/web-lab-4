@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace web_lab_4.Models
 {
@@ -51,9 +52,43 @@ namespace web_lab_4.Models
         public int CategoryId { get; set; }
         public Category? Category { get; set; }
         
+        // Navigation property for reviews
+        public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
         // Computed properties
         public bool IsInStock => StockQuantity > 0;
         public bool IsExpired => ExpiryDate.HasValue && ExpiryDate.Value < DateTime.Now;
         public string DisplayWeight => $"{Weight} {WeightUnit}";
+
+        // Calculated properties for reviews
+        [NotMapped]
+        public double AverageRating
+        {
+            get
+            {
+                if (Reviews == null || !Reviews.Any(r => r.IsApproved))
+                    return 0;
+
+                return Reviews.Where(r => r.IsApproved).Average(r => r.Rating);
+            }
+        }
+
+        [NotMapped]
+        public int ReviewCount
+        {
+            get
+            {
+                return Reviews?.Where(r => r.IsApproved).Count() ?? 0;
+            }
+        }
+
+        [NotMapped]
+        public string DisplayRating
+        {
+            get
+            {
+                return AverageRating > 0 ? AverageRating.ToString("F1") : "No rating";
+            }
+        }
     }
 }

@@ -154,5 +154,36 @@ namespace web_lab_4.Services
             if (product.Price <= 0)
                 throw new ArgumentException("Price must be greater than 0");
         }
+
+        // Add these new methods to ProductService class
+
+        public async Task<IEnumerable<Product>> GetAllProductsWithReviewsAsync()
+        {
+            // This would ideally load products with their reviews
+            // For now, just return all products - the review loading will be handled separately
+            return await _productRepository.GetAllAsync();
+        }
+
+        public async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count = 8)
+        {
+            var allProducts = await _productRepository.GetAllAsync();
+            
+            // Return featured products based on some criteria
+            // For example: available products, ordered by some priority
+            return allProducts
+                .Where(p => p.IsAvailable && p.IsInStock)
+                .OrderByDescending(p => p.Price) // or any other criteria
+                .Take(count)
+                .ToList();
+        }
+
+        public async Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId, int count)
+        {
+            var categoryProducts = await _productRepository.GetByCategoryAsync(categoryId);
+            return categoryProducts
+                .Where(p => p.IsAvailable)
+                .Take(count)
+                .ToList();
+        }
     }
 }

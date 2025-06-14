@@ -9,25 +9,44 @@ namespace web_lab_4.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IProductService _productService;
+        private readonly IReviewService _reviewService; // Assuming you have this service for reviews
 
-        public HomeController(ILogger<HomeController> logger, IProductService productService)
+        public HomeController(ILogger<HomeController> logger, IProductService productService, IReviewService reviewService)
         {
             _logger = logger;
             _productService = productService;
+            _reviewService = reviewService;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                // Get featured products (available products with good stock)
-                var allProducts = await _productService.GetAllProductsAsync();
-                var featuredProducts = allProducts
-                    .Where(p => p.IsAvailable && p.IsInStock && !p.IsExpired)
-                    .OrderByDescending(p => p.Id) // or any other criteria for "featured"
-                    .Take(8) // Show up to 8 products
-                    .ToList();
-
+                var featuredProducts = await _productService.GetFeaturedProductsAsync(8);
+                
+                // Load review stats for each product
+                foreach (var product in featuredProducts)
+                {
+                    if (_reviewService != null)
+                    {
+                        try
+                        {
+                            var stats = await _reviewService.GetProductRatingStatsAsync(product.Id);
+                            ViewData[$"ReviewCount_{product.Id}"] = stats.reviewCount;
+                            ViewData[$"AverageRating_{product.Id}"] = stats.averageRating;
+                            ViewData[$"DisplayRating_{product.Id}"] = stats.averageRating > 0 
+                                ? stats.averageRating.ToString("F1") 
+                                : "No rating";
+                        }
+                        catch
+                        {
+                            ViewData[$"ReviewCount_{product.Id}"] = 0;
+                            ViewData[$"AverageRating_{product.Id}"] = 0.0;
+                            ViewData[$"DisplayRating_{product.Id}"] = "No rating";
+                        }
+                    }
+                }
+                
                 return View(featuredProducts);
             }
             catch (Exception ex)

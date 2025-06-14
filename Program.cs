@@ -68,6 +68,10 @@ builder.Services.AddScoped<ISessionManager, SessionManager>();
 // builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
 builder.Services.AddMemoryCache(); // If not already added
 
+// Register Review services
+builder.Services.AddScoped<IReviewRepository, EFReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
 var app = builder.Build();
 
 // Seed data

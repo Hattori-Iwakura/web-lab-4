@@ -5,13 +5,13 @@
     ViewData["Title"] = "Products";
     Layout = "~/Views/Shared/_Layout.cshtml";
     
-    // Pagination
-    var pageSize = 16; // 4 rows x 4 products
+    // Pagination - Updated for 3 products per row, 4 rows = 12 products per page
+    var pageSize = 12; // 4 rows x 3 products
     var currentPage = ViewBag.CurrentPage ?? 1;
     var totalProducts = ViewBag.TotalProducts ?? Model.Count();
     var totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
     
-    // Current filters
+    // Current filters (giữ nguyên)
     var searchTerm = ViewBag.SearchTerm ?? "";
     var selectedCategory = ViewBag.SelectedCategory ?? "";
     var minPrice = ViewBag.MinPrice ?? "";
@@ -20,7 +20,7 @@
     var brand = ViewBag.Brand ?? "";
     var flavor = ViewBag.Flavor ?? "";
     
-    // Filter data
+    // Filter data (giữ nguyên)
     var categories = ViewBag.Categories as IEnumerable<web_lab_4.Models.Category> ?? new List<web_lab_4.Models.Category>();
     var brands = ViewBag.Brands as IEnumerable<string> ?? new List<string>();
     var flavors = ViewBag.Flavors as IEnumerable<string> ?? new List<string>();
@@ -244,79 +244,107 @@
             <!-- Products Grid -->
             @if (Model.Any())
             {
-                <!-- Grid Container with responsive columns -->
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-3 g-4 mb-4">
+                <!-- Grid Container with responsive columns - Updated for 3 products per row -->
+                <div class="row g-4 mb-4">
                     @foreach (var product in Model)
                     {
-                        <div class="col">
-                            <div class="card h-100 shadow-sm product-card clickable-card" data-href="@Url.Action("Details", new { id = product.Id })">
-                                <div class="position-relative">
+                        <div class="col-lg-4 col-md-6 col-sm-12">
+                            <div class="product-card h-100 clickable-card" data-href="@Url.Action("Details", new { id = product.Id })">
+                                <!-- Product Image -->
+                                <div class="product-image-container">
                                     @if (!string.IsNullOrEmpty(product.ImageUrl))
                                     {
-                                        <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 250px; object-fit: cover;">
+                                        <img src="@product.ImageUrl" alt="@product.Name" class="product-image" />
                                     }
                                     else
                                     {
-                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
-                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        <div class="product-image-placeholder">
+                                            <i class="fas fa-dumbbell fa-3x text-muted"></i>
                                         </div>
                                     }
                                     
-                                    <!-- Product Badges -->
-                                    <div class="position-absolute top-0 end-0 m-2">
-                                        @if (product.IsExpired)
-                                        {
-                                            <span class="badge bg-danger mb-1 d-block">Expired</span>
-                                        }
-                                        else if (product.StockQuantity <= 0)
-                                        {
-                                            <span class="badge bg-warning text-dark mb-1 d-block">Out of Stock</span>
-                                        }
-                                        else if (product.StockQuantity <= 10)
-                                        {
-                                            <span class="badge bg-info mb-1 d-block">Low Stock</span>
-                                        }
-                                        
-                                        @if (product.Price < 50) // Sale badge for products under $50
-                                        {
-                                            <span class="badge bg-success d-block">Sale!</span>
-                                        }
-                                    </div>
+                                    <!-- Product Badge -->
+                                    @if (!product.IsAvailable)
+                                    {
+                                        <span class="product-badge badge-unavailable">Unavailable</span>
+                                    }
+                                    else if (product.StockQuantity <= 0)
+                                    {
+                                        <span class="product-badge badge-out-of-stock">Out Of Stock</span>
+                                    }
+                                    else if (product.StockQuantity <= 10)
+                                    {
+                                        <span class="product-badge badge-low-stock">Low Stock</span>
+                                    }
+                                    else if (product.Price < 600000)
+                                    {
+                                        <span class="product-badge badge-sale">Best Value</span>
+                                    }
+                                    else if (product.Price > 1500000)
+                                    {
+                                        <span class="product-badge badge-premium">Premium</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="product-badge badge-popular">Popular</span>
+                                    }
                                 </div>
-                                
-                                <div class="card-body d-flex flex-column">
-                                    <!-- Product Title -->
-                                    <h6 class="card-title text-truncate" title="@product.Name">@product.Name</h6>
+
+                                <!-- Product Info (giữ nguyên toàn bộ phần này) -->
+                                <div class="product-info">
+                                    <div class="product-category mb-2">
+                                        <span class="badge bg-secondary">@(product.Category?.Name ?? "General")</span>
+                                    </div>
                                     
-                                    <!-- Brand and Flavor -->
-                                    @if (!string.IsNullOrEmpty(product.Brand) || !string.IsNullOrEmpty(product.Flavor))
-                                    {
-                                        <div class="mb-2">
-                                            @if (!string.IsNullOrEmpty(product.Brand))
-                                            {
-                                                <small class="text-muted d-block">@product.Brand</small>
-                                            }
-                                            @if (!string.IsNullOrEmpty(product.Flavor))
-                                            {
-                                                <span class="badge bg-info text-dark small">@product.Flavor</span>
-                                            }
-                                        </div>
-                                    }
+                                    <h5 class="product-title">
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" 
+                                           class="text-decoration-none">
+                                            @product.Name
+                                        </a>
+                                    </h5>
                                     
-                                    <!-- Weight Display -->
-                                    @if (product.Weight > 0)
-                                    {
-                                        <small class="text-muted">@product.DisplayWeight</small>
-                                    }
-                                    
-                                    <!-- Description -->
-                                    <p class="card-text text-muted small flex-grow-1">
+                                    <!-- Product Description -->
+                                    <p class="product-description text-muted small">
                                         @{
                                             var description = product.Description ?? "";
                                             var maxLength = 80;
                                         }
                                         @(description.Length > maxLength ? description.Substring(0, maxLength) + "..." : description)
                                     </p>
+                                    
+                                    <!-- Brand -->
+                                    @if (!string.IsNullOrEmpty(product.Brand))
+                                    {
+                                        <p class="text-muted small mb-1">
+                                            Brand: @product.Brand
+                                        </p>
+                                    }
+                                    
+                                    <!-- Weight Display -->
+                                    @if (product.Weight > 0)
+                                    {
+                                        <p class="text-muted small mb-1">Weight: @product.DisplayWeight</p>
+                                    }
+                                    
+                                    <!-- Stock Status -->
+                                    <div class="mb-2">
+                                        @if (!product.IsAvailable)
+                                        {
+                                            <span class="badge bg-secondary small">Unavailable</span>
+                                        }
+                                        else if (product.StockQuantity <= 0)
+                                        {
+                                            <span class="badge bg-danger small">Out Of Stock</span>
+                                        }
+                                        else if (product.StockQuantity <= 10)
+                                        {
+                                            <span class="badge bg-warning text-dark small">Low On Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success small">In Stock</span>
+                                        }
+                                    </div>
                                     
                                     <!-- Product Rating -->
                                     <div class="product-rating mb-2">
@@ -330,57 +358,53 @@
                                         {
                                             @for (int i = 1; i <= 5; i++)
                                             {
-                                                <i class="fas fa-star @(i <= Math.Round(averageRating) ? "text-warning" : "text-muted")"></i>
-                                            }
-                                            <span class="rating-text text-muted small">(@displayRating) @reviewCount review@(reviewCount != 1 ? "s" : "")</span>
-                                        }
-                                        else
-                                        {
-                                            @for (int i = 1; i <= 5; i++)
-                                            {
-                                                <i class="far fa-star text-muted"></i>
-                                            }
-                                            <span class="rating-text text-muted small">No reviews yet</span>
-                                        }
-                                    </div>
-
-                                    <!-- Price and Category -->
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="h6 text-primary mb-0">@product.Price.ToString("C")</span>
-                                            @if (product.Category != null)
-                                            {
-                                                <span class="badge bg-secondary small">@product.Category.Name</span>
-                                            }
-                                        </div>
-                                    </div>
-
-                                    <!-- Action Buttons -->
-                                    <div class="mt-auto">
-                                        <div class="row g-1">
-                                            <div class="col-12">
-                                                @if (product.IsAvailable && product.IsInStock && !product.IsExpired)
+                                                @if (i <= averageRating)
                                                 {
-                                                    <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
-                                                        <input type="hidden" name="productId" value="@product.Id" />
-                                                        <input type="hidden" name="quantity" value="1" />
-                                                        <button type="submit" class="btn btn-primary btn-sm w-100" onclick="event.stopPropagation();">
-                                                            <i class="fas fa-cart-plus"></i> Add to Cart
-                                                        </button>
-                                                    </form>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                }
+                                                else if (i - 0.5 <= averageRating)
+                                                {
+                                                    <i class="fas fa-star-half-alt text-warning"></i>
                                                 }
                                                 else
                                                 {
-                                                    <button class="btn btn-secondary btn-sm w-100" disabled onclick="event.stopPropagation();">
-                                                        <i class="fas fa-ban"></i> Unavailable
-                                                    </button>
+                                                    <i class="far fa-star text-muted"></i>
                                                 }
-                                            </div>
+                                            }
+                                            <small class="text-muted ms-1">(@reviewCount)</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">No reviews yet</small>
+                                        }
+                                    </div>
+
+                                    <!-- Product Footer -->
+                                    <div class="product-footer mt-auto">
+                                        <div class="product-price">
+                                            <span class="current-price text-primary fw-bold h5 mb-0">@product.Price.ToString("C")</span>
                                         </div>
                                         
-                                        @if (User.IsInRole("Admin"))
+                                        @if (product.IsAvailable && product.IsInStock && !product.IsExpired)
                                         {
-                                            <div class="row g-1 mt-1">
+                                            <button type="button" class="btn btn-primary btn-sm add-to-cart-btn" 
+                                                    data-product-id="@product.Id"
+                                                    onclick="event.stopPropagation();">
+                                                <i class="fas fa-cart-plus"></i> Add to Cart
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-secondary btn-sm" disabled onclick="event.stopPropagation();">
+                                                <i class="fas fa-ban"></i> Unavailable
+                                            </button>
+                                        }
+                                    </div>
+                                    
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <div class="admin-actions mt-2 pt-2 border-top">
+                                            <div class="row g-1">
                                                 <div class="col-6">
                                                     <a asp-area="Admin" asp-controller="Product" asp-action="Update" asp-route-id="@product.Id" 
                                                        class="btn btn-warning btn-sm w-100" onclick="event.stopPropagation();">
@@ -394,8 +418,8 @@
                                                     </a>
                                                 </div>
                                             </div>
-                                        }
-                                    </div>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -668,17 +692,154 @@
 
 @section Styles {
     <style>
+        /* Product Card Styles - Same as Home/Index */
         .product-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            height: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
         }
-        
+
         .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
-        
-        /* Clickable card styling */
+
+        .product-image-container {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.1);
+        }
+
+        .product-image-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            z-index: 3;
+        }
+
+        .badge-sale {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .badge-popular {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .badge-premium {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .badge-out-of-stock {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .badge-low-stock {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+        }
+
+        .badge-unavailable {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+
+        .product-info {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .product-title {
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .product-title a {
+            color: #2c3e50;
+            transition: color 0.3s ease;
+        }
+
+        .product-title a:hover {
+            color: #0d6efd;
+        }
+
+        .product-description {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .product-price {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .current-price {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        /* Admin actions styling */
+        .admin-actions {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-card:hover .admin-actions {
+            opacity: 1;
+        }
+
+        /* Filter and other existing styles */
         .clickable-card {
             cursor: pointer;
         }
@@ -687,18 +848,14 @@
             border-color: #007bff !important;
         }
         
+        .clickable-card:hover .product-title a {
+            color: #007bff;
+        }
+        
         /* Prevent buttons from inheriting card cursor */
         .clickable-card button,
         .clickable-card a {
             cursor: pointer !important;
-        }
-        
-        .card-img-top {
-            transition: transform 0.3s ease;
-        }
-        
-        .product-card:hover .card-img-top {
-            transform: scale(1.05);
         }
         
         .btn {
@@ -713,26 +870,13 @@
             min-width: 300px;
         }
         
-        .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        
         .pagination .page-link {
             color: #007bff;
         }
         
         .pagination .page-item.active .page-link {
-            background-color: #007bff;
+            background-color: #007bff38;
             border-color: #007bff;
-        }
-        
-        .filter-badge {
-            cursor: pointer;
-        }
-        
-        .filter-badge:hover {
-            opacity: 0.8;
         }
         
         /* Sticky sidebar */
@@ -742,32 +886,13 @@
         
         /* Grid responsive adjustments */
         @@media (max-width: 576px) {
-            .row-cols-1 > * {
+            .row > * {
                 margin-bottom: 1rem;
             }
         }
         
-        @@media (min-width: 992px) {
-            .row-cols-lg-3 > * {
-                flex: 0 0 auto;
-                width: 33.33333%;
-            }
-        }
-        
-        @@media (min-width: 1200px) {
-            .row-cols-xl-3 > * {
-                flex: 0 0 auto;
-                width: 33.33333%;
-            }
-        }
-        
-        /* Card height consistency */
-        .card {
-            min-height: 400px;
-        }
-        
         @@media (max-width: 768px) {
-            .card {
+            .product-card {
                 min-height: auto;
             }
         }
@@ -793,10 +918,80 @@
         .form-select-sm, .form-control-sm {
             font-size: 0.875rem;
         }
+
+        /* Custom Bootstrap 4 compatible badge styles */
+        .bg-success {
+            background-color: #28a745 !important;
+        }
+
+        .bg-danger {
+            background-color: #dc3545 !important;
+        }
+
+        .bg-warning {
+            background-color: #ffc107 !important;
+        }
+
+        .bg-secondary {
+            background-color: #6c757d !important;
+        }
+
+        .bg-info {
+            background-color: #17a2b8 !important;
+        }
+
+        .text-white {
+            color: #fff !important;
+        }
+
+        .text-dark {
+            color: #343a40 !important;
+        }
+
+        /* Card border styles for statistics */
+        .border-left-primary { 
+            border-left: 0.25rem solid #4e73df !important; 
+        }
         
-        /* Hover effect for clickable cards */
-        .clickable-card:hover .card-title {
-            color: #007bff;
+        .border-left-success { 
+            border-left: 0.25rem solid #1cc88a !important; 
+        }
+        
+        .border-left-warning { 
+            border-left: 0.25rem solid #f6c23e !important; 
+        }
+        
+        .border-left-danger { 
+            border-left: 0.25rem solid #e74a3b !important; 
+        }
+        
+        .text-xs { 
+            font-size: 0.7rem; 
+        }
+
+        /* Table improvements */
+        .table td, .table th {
+            vertical-align: middle;
+            border-color: #e3e6f0;
+        }
+
+        .table-responsive {
+            border-radius: 0.375rem;
+        }
+
+        /* Button improvements */
+        .btn-group .btn {
+            border-radius: 0;
+        }
+
+        .btn-group .btn:first-child {
+            border-top-left-radius: 0.375rem;
+            border-bottom-left-radius: 0.375rem;
+        }
+
+        .btn-group .btn:last-child {
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
         }
     </style>
 }

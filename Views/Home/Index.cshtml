@@ -108,7 +108,7 @@
                 @foreach (var product in Model.Take(8))
                 {
                     <div class="col-lg-3 col-md-6">
-                        <div class="product-card h-100">
+                        <div class="product-card h-100 clickable-card" data-product-id="@product.Id">
                             <!-- Product Image -->
                             <div class="product-image-container">
                                 @if (!string.IsNullOrEmpty(product.ImageUrl))
@@ -123,11 +123,11 @@
                                 }
                                 
                                 <!-- Product Badge -->
-                                @if (product.Price < 30)
+                                @if (product.Price < 600000)
                                 {
                                     <span class="product-badge badge-sale">Best Value</span>
                                 }
-                                else if (product.Price > 80)
+                                else if (product.Price > 1500000)
                                 {
                                     <span class="product-badge badge-premium">Premium</span>
                                 }
@@ -144,10 +144,7 @@
                                 </div>
                                 
                                 <h5 class="product-title">
-                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" 
-                                       class="text-decoration-none">
-                                        @product.Name
-                                    </a>
+                                    @product.Name
                                 </h5>
                                 
                                 <!-- Product Description -->
@@ -211,10 +208,17 @@
                                         <span class="current-price">@product.Price.ToString("C")</span>
                                     </div>
                                     <button class="btn btn-primary btn-sm add-to-cart-btn" 
-                                            data-product-id="@product.Id">
+                                            data-product-id="@product.Id"
+                                            onclick="event.stopPropagation();">
                                         <i class="fas fa-cart-plus me-1"></i>Add to Cart
                                     </button>
                                 </div>
+                            </div>
+                            
+                            <!-- Click overlay for better UX -->
+                            <div class="card-click-overlay">
+                                <i class="fas fa-eye"></i>
+                                <span>View Details</span>
                             </div>
                         </div>
                     </div>
@@ -291,9 +295,24 @@
 
 @section Scripts {
     <script>
- $(document).ready(function() {
+        $(document).ready(function() {
+            // Clickable card functionality
+            $('.clickable-card').on('click', function(e) {
+                // Don't navigate if clicking on buttons or links
+                if ($(e.target).closest('button, a').length > 0) {
+                    return;
+                }
+                
+                var productId = $(this).data('product-id');
+                if (productId) {
+                    window.location.href = '/Product/Details/' + productId;
+                }
+            });
+
+            // Add to cart functionality
             $('.add-to-cart-btn').on('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent card click event
                 
                 var productId = $(this).data('product-id');
                 var button = $(this);
@@ -309,16 +328,16 @@
                 $.ajax({
                     url: '/ShoppingCart/AddToCart',
                     type: 'POST',
-                    dataType: 'json', // Expect JSON response
+                    dataType: 'json',
                     data: {
                         productId: productId,
                         quantity: 1
                     },
                     beforeSend: function(xhr) {
-                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); // Mark as AJAX request
+                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                     },
                     success: function(response) {
-                        console.log('Response:', response); // Debug log
+                        console.log('Response:', response);
                         
                         if (response && response.success === true) {
                             button.removeClass('btn-primary').addClass('btn-success')
@@ -329,15 +348,12 @@
                                       .prop('disabled', false).html(originalText);
                             }, 2000);
                             
-                            // Update cart count
                             if (window.updateCartCount) {
                                 window.updateCartCount();
                             } else if (response.cartCount) {
-                                // Update cart badge if it exists
                                 $('.cart-count').text(response.cartCount);
                             }
                             
-                            // Show success message
                             showToast(response.message || 'Product added to cart!', 'success');
                         } else {
                             button.prop('disabled', false).html(originalText);
@@ -345,7 +361,7 @@
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('AJAX Error:', xhr.responseText); // Debug log
+                        console.error('AJAX Error:', xhr.responseText);
                         button.prop('disabled', false).html(originalText);
                         
                         var errorMessage = 'Error adding product to cart. Please try again.';
@@ -365,7 +381,6 @@
         function showToast(message, type) {
             type = type || 'info';
             
-            // Remove existing toasts
             $('.toast').remove();
             
             var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
@@ -380,7 +395,6 @@
                 '</div>' +
             '</div>';
             
-            // Add toast container if it doesn't exist
             if (!$('#toast-container').length) {
                 $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>');
             }
@@ -388,14 +402,12 @@
             var $toast = $(toastHtml);
             $('#toast-container').append($toast);
             
-            // Show toast
             var bsToast = new bootstrap.Toast($toast[0], {
                 autohide: true,
                 delay: 3000
             });
             bsToast.show();
             
-            // Remove toast after hiding
             $toast.on('hidden.bs.toast', function() {
                 $(this).remove();
             });
@@ -470,11 +482,46 @@
             overflow: hidden;
             transition: all 0.3s ease;
             border: none;
+            position: relative;
         }
 
-        .product-card:hover {
+        .clickable-card {
+            cursor: pointer;
+        }
+
+        .clickable-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-click-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .card-click-overlay i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-click-overlay span {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .clickable-card:hover .card-click-overlay {
+            opacity: 1;
         }
 
         .product-image-container {
@@ -486,7 +533,7 @@
         .product-image {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             transition: transform 0.3s ease;
         }
 
@@ -531,20 +578,14 @@
 
         .product-info {
             padding: 1.5rem;
+            position: relative;
+            z-index: 5;
         }
 
         .product-title {
             margin-bottom: 0.75rem;
             font-weight: 600;
-        }
-
-        .product-title a {
             color: #2c3e50;
-            transition: color 0.3s ease;
-        }
-
-        .product-title a:hover {
-            color: #0d6efd;
         }
 
         .product-description {
@@ -577,6 +618,11 @@
             color: #27ae60;
         }
 
+        .add-to-cart-btn {
+            position: relative;
+            z-index: 15;
+        }
+
         .feature-box {
             padding: 2rem 1rem;
             transition: transform 0.3s ease;
@@ -603,6 +649,10 @@
             
             .hero-title {
                 font-size: 2.5rem !important;
+            }
+
+            .card-click-overlay {
+                opacity: 0.8;
             }
         }
 

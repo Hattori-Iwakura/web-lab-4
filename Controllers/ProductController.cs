@@ -31,7 +31,7 @@ namespace web_lab_4.Controllers
             string sortBy = "",
             int page = 1)
         {
-            const int pageSize = 16;
+            const int pageSize = 12;
 
             try
             {

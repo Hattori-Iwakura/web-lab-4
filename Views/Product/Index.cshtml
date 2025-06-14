@@ -570,7 +570,7 @@
 
 @section Scripts {
     <script>
-        // Make cards clickable
+      // Make cards clickable
         $(document).on('click', '.clickable-card', function(e) {
             // Check if the click target is not a button or link
             if (!$(e.target).is('button, a, input') && !$(e.target).closest('button, a, form').length) {
@@ -594,92 +594,109 @@
             $('#filterForm').submit();
         });
 
-        // Handle add to cart form submission
-        $('.add-to-cart-form').on('submit', function(e) {
+        // Handle add to cart button clicks
+        $('.add-to-cart-btn').on('click', function(e) {
             e.preventDefault();
-            e.stopPropagation(); // Prevent card click
+            e.stopPropagation(); // Prevent card click event
             
-            const form = $(this);
-            const submitBtn = form.find('button[type="submit"]');
-            const originalText = submitBtn.html();
+            var productId = $(this).data('product-id');
+            var button = $(this);
+            var originalText = button.html();
             
-            // Show loading state
-            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            if (!productId) {
+                alert('Invalid product. Please refresh the page and try again.');
+                return;
+            }
+            
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Adding...');
             
             $.ajax({
-                url: form.attr('action'),
+                url: '/ShoppingCart/AddToCart',
                 type: 'POST',
-                data: form.serialize(),
+                dataType: 'json',
+                data: {
+                    productId: productId,
+                    quantity: 1
+                },
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                },
                 success: function(response) {
-                    // Show success animation
-                    submitBtn.removeClass('btn-primary').addClass('btn-success')
-                           .html('<i class="fas fa-check"></i> Added!');
+                    console.log('Response:', response);
                     
-                    // Update cart count
-                    if (window.updateCartCount) {
-                        window.updateCartCount();
+                    if (response && response.success === true) {
+                        button.removeClass('btn-primary').addClass('btn-success')
+                              .html('<i class="fas fa-check me-1"></i>Added!');
+                        
+                        setTimeout(function() {
+                            button.removeClass('btn-success').addClass('btn-primary')
+                                  .prop('disabled', false).html(originalText);
+                        }, 2000);
+                        
+                        if (window.updateCartCount) {
+                            window.updateCartCount();
+                        } else if (response.cartCount) {
+                            $('.cart-count').text(response.cartCount);
+                        }
+                        
+                        showToast(response.message || 'Product added to cart!', 'success');
+                    } else {
+                        button.prop('disabled', false).html(originalText);
+                        showToast(response.message || 'Error adding product to cart', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr.responseText);
+                    button.prop('disabled', false).html(originalText);
+                    
+                    var errorMessage = 'Error adding product to cart. Please try again.';
+                    if (xhr.status === 404) {
+                        errorMessage = 'Product not found.';
+                    } else if (xhr.status === 400) {
+                        errorMessage = 'Invalid request.';
                     }
                     
-                    // Reset button after 2 seconds
-                    setTimeout(function() {
-                        submitBtn.prop('disabled', false)
-                               .removeClass('btn-success').addClass('btn-primary')
-                               .html(originalText);
-                    }, 2000);
-                    
-                    // Show toast notification
-                    showToast('Product added to cart successfully!', 'success');
-                },
-                error: function() {
-                    // Show error state
-                    submitBtn.removeClass('btn-primary').addClass('btn-danger')
-                           .html('<i class="fas fa-times"></i>');
-                    
-                    // Reset button after 2 seconds
-                    setTimeout(function() {
-                        submitBtn.prop('disabled', false)
-                               .removeClass('btn-danger').addClass('btn-primary')
-                               .html(originalText);
-                    }, 2000);
-                    
-                    showToast('Error adding product to cart. Please try again.', 'error');
+                    showToast(errorMessage, 'error');
                 }
             });
         });
         
         // Toast notification function
         function showToast(message, type) {
-            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
-            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            type = type || 'info';
             
-            const toast = `
-                <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
-                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="toast-header ${bgClass} text-white">
-                            <i class="fas ${iconClass} me-2"></i>
-                            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-                        </div>
-                        <div class="toast-body">
-                            ${message}
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Remove existing toasts
+            $('.toast').remove();
             
-            $('body').append(toast);
+            var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            var icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
             
-            // Auto remove toast after 5 seconds
-            setTimeout(function() {
-                $('.toast').fadeOut();
-            }, 5000);
+            var toastHtml = '<div class="toast align-items-center text-white ' + bgClass + ' border-0" role="alert">' +
+                '<div class="d-flex">' +
+                    '<div class="toast-body">' +
+                        '<i class="fas fa-' + icon + ' me-2"></i>' + message +
+                    '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>' +
+                '</div>' +
+            '</div>';
+            
+            if (!$('#toast-container').length) {
+                $('body').append('<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>');
+            }
+            
+            var $toast = $(toastHtml);
+            $('#toast-container').append($toast);
+            
+            var bsToast = new bootstrap.Toast($toast[0], {
+                autohide: true,
+                delay: 3000
+            });
+            bsToast.show();
+            
+            $toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
         }
-        
-        // Auto-hide toasts
-        $('.toast').toast({
-            autohide: true,
-            delay: 5000
-        });
 
         // Smooth scroll to top when changing pages
         if (window.location.search.includes('page=')) {

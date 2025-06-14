@@ -440,28 +440,35 @@ else if (Model.StockQuantity <= 10)
 </div>
 
 @section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         function updateStock() {
-            var newQuantity = $('#newStockQuantity').val();
+            var newQuantity = document.getElementById('newStockQuantity').value;
             if (newQuantity === '' || newQuantity < 0) {
                 alert('Please enter a valid stock quantity.');
                 return;
             }
 
             if (confirm('Are you sure you want to update the stock quantity to ' + newQuantity + '?')) {
-                $.post('@Url.Action("UpdateStock")', { 
-                    id: @Model.Id, 
-                    quantity: newQuantity 
+                fetch('@Url.Action("UpdateStock")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: 'id=@Model.Id&quantity=' + newQuantity
                 })
-                .done(function(result) {
+                .then(response => response.json())
+                .then(result => {
                     if (result.success) {
                         location.reload();
                     } else {
                         alert('Error: ' + result.message);
                     }
                 })
-                .fail(function() {
+                .catch(error => {
                     alert('Error occurred while updating stock.');
+                    console.error('Error:', error);
                 });
             }
         }
@@ -469,17 +476,26 @@ else if (Model.StockQuantity <= 10)
         function toggleAvailability() {
             var action = @Model.IsAvailable.ToString().ToLower() ? 'disable' : 'enable';
             if (confirm('Are you sure you want to ' + action + ' this product?')) {
-                $.post('@Url.Action("ToggleAvailability")', { id: @Model.Id })
-                    .done(function(result) {
-                        if (result.success) {
-                            location.reload();
-                        } else {
-                            alert('Error: ' + result.message);
-                        }
-                    })
-                    .fail(function() {
-                        alert('Error occurred while updating product availability.');
-                    });
+                fetch('@Url.Action("ToggleAvailability")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: 'id=@Model.Id'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error occurred while updating product availability.');
+                    console.error('Error:', error);
+                });
             }
         }
     </script>

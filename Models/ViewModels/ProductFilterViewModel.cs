@@ -4,16 +4,20 @@ namespace web_lab_4.Models.ViewModels
 {
     public class ProductFilterViewModel
     {
-        public IEnumerable<Product> Products { get; set; } = new List<Product>();
         public ProductFilterModel Filter { get; set; } = new ProductFilterModel();
+        public IEnumerable<Product> Products { get; set; } = new List<Product>();
         public IEnumerable<Category> Categories { get; set; } = new List<Category>();
         public IEnumerable<string> Brands { get; set; } = new List<string>();
         
+        // Pagination properties
         public int CurrentPage { get; set; } = 1;
         public int PageSize { get; set; } = 25;
         public int TotalItems { get; set; }
         public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
+        public bool HasPreviousPage => CurrentPage > 1;
+        public bool HasNextPage => CurrentPage < TotalPages;
         
+        // Statistics
         public int TotalProducts { get; set; }
         public int LowStockCount { get; set; }
         public int ExpiredCount { get; set; }

@@ -210,34 +210,21 @@
 
     <!-- Products Table -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Products List</h6>
-            <div>
-                <span class="badge badge-info">Page @Model.CurrentPage of @Model.TotalPages</span>
-            </div>
         </div>
         <div class="card-body">
-            @if (!Model.Products.Any())
-            {
-                <div class="text-center py-4">
-                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">No products found</h5>
-                    <p class="text-muted">Try adjusting your filter criteria.</p>
-                </div>
-            }
-            else
+            @if (Model?.Products?.Any() == true)
             {
                 <div class="table-responsive">
-                    <table class="table table-bordered" width="100%" cellspacing="0">
+                    <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th>Image</th>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Price</th>
-                                <th>Weight</th>
                                 <th>Stock</th>
-                                <th>Expiry</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -245,7 +232,7 @@
                         <tbody>
                             @foreach (var item in Model.Products)
                             {
-                                <tr class="@(item.IsExpired ? "table-danger" : item.StockQuantity <= 10 ? "table-warning" : "")">
+                                <tr>
                                     <td>
                                         @if (!string.IsNullOrEmpty(item.ImageUrl))
                                         {
@@ -259,61 +246,63 @@
                                         }
                                     </td>
                                     <td>
-                                        <strong class="text-dark">@item.Name</strong>
+                                        <strong>@item.Name</strong>
                                         @if (!string.IsNullOrEmpty(item.Brand))
                                         {
                                             <br><small class="text-muted">@item.Brand</small>
                                         }
-                                        @if (!string.IsNullOrEmpty(item.Flavor))
+                                    </td>
+                                    <td>@(item.Category?.Name ?? "No Category")</td>
+                                    <td>$@item.Price.ToString("F2")</td>
+                                    <td>
+                                        @if (item.StockQuantity <= 0)
                                         {
-                                            <br><span class="badge badge-info">@item.Flavor</span>
+                                            <span class="badge bg-danger text-white">@item.StockQuantity</span>
                                         }
-                                    </td>
-                                    <td class="text-dark">@(item.Category?.Name ?? "No Category")</td>
-                                    <td class="text-dark">$@item.Price.ToString("F2")</td>
-                                    <td class="text-dark">@item.DisplayWeight</td>
-                                    <td>
-                                        <span class="badge @(item.StockQuantity <= 0 ? "badge-danger" : item.StockQuantity <= 10 ? "badge-warning" : "badge-success")">
-                                            @item.StockQuantity
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if (item.ExpiryDate.HasValue)
+                                        else if (item.StockQuantity <= 10)
                                         {
-                                            <span class="text-dark">@item.ExpiryDate.Value.ToString("dd/MM/yyyy")</span>
-                                            @if (item.IsExpired)
-                                            {
-                                                <br><small class="text-danger"><i class="fas fa-exclamation-triangle"></i> Expired</small>
-                                            }
+                                            <span class="badge bg-warning text-dark">@item.StockQuantity</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">N/A</span>
+                                            <span class="badge bg-success text-white">@item.StockQuantity</span>
                                         }
                                     </td>
                                     <td>
-                                        @if (item.IsAvailable)
+                                        @if (!item.IsAvailable)
                                         {
-                                            <span class="badge badge-success"><i class="fas fa-check"></i> Available</span>
+                                            <span class="badge bg-secondary text-white">
+                                                <i class="fas fa-times"></i> Unavailable
+                                            </span>
+                                        }
+                                        else if (item.StockQuantity <= 0)
+                                        {
+                                            <span class="badge bg-danger text-white">
+                                                <i class="fas fa-times-circle"></i> Out Of Stock
+                                            </span>
+                                        }
+                                        else if (item.StockQuantity <= 10)
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-exclamation-triangle"></i> Low On Stock
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="badge badge-secondary"><i class="fas fa-times"></i> Unavailable</span>
+                                            <span class="badge bg-success text-white">
+                                                <i class="fas fa-check"></i> Available
+                                            </span>
                                         }
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a asp-action="Display" asp-route-id="@item.Id" class="btn btn-sm btn-info" title="View Details">
+                                            <a asp-action="Display" asp-route-id="@item.Id" class="btn btn-sm btn-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a asp-action="Update" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Edit">
+                                            <a asp-action="Update" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-@(item.IsAvailable ? "secondary" : "success")" 
-                                                    onclick="toggleAvailability(@item.Id)" title="Toggle Availability">
-                                                <i class="fas fa-@(item.IsAvailable ? "eye-slash" : "eye")"></i>
-                                            </button>
-                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" title="Delete">
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>
@@ -328,14 +317,28 @@
                 @if (Model.TotalPages > 1)
                 {
                     <nav aria-label="Product pagination">
-                        <ul class="pagination justify-content-center">
+                        <ul class="pagination justify-content-center mt-4">
+                            <!-- First Page -->
                             @if (Model.CurrentPage > 1)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="@GetPageUrl(Model.CurrentPage - 1)">Previous</a>
+                                    <a class="page-link" href="@GetPageUrl(1)">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
                                 </li>
                             }
 
+                            <!-- Previous Page -->
+                            @if (Model.HasPreviousPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@GetPageUrl(Model.CurrentPage - 1)">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Page Numbers -->
                             @{
                                 var startPage = Math.Max(1, Model.CurrentPage - 2);
                                 var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
@@ -348,15 +351,44 @@
                                 </li>
                             }
 
+                            <!-- Next Page -->
+                            @if (Model.HasNextPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@GetPageUrl(Model.CurrentPage + 1)">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Last Page -->
                             @if (Model.CurrentPage < Model.TotalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="@GetPageUrl(Model.CurrentPage + 1)">Next</a>
+                                    <a class="page-link" href="@GetPageUrl(Model.TotalPages)">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
                                 </li>
                             }
                         </ul>
                     </nav>
+
+                    <!-- Pagination Info -->
+                    <div class="text-center text-muted mt-2">
+                        Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) to 
+                        @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
+                        of @Model.TotalItems products
+                        (Page @Model.CurrentPage of @Model.TotalPages)
+                    </div>
                 }
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No products found</h5>
+                    <p class="text-muted">Try adjusting your filter criteria.</p>
+                </div>
             }
         </div>
     </div>
@@ -472,51 +504,69 @@
 }
 
 <style>
-    .border-left-primary {
-        border-left: 0.25rem solid #4e73df !important;
-    }
-    .border-left-success {
-        border-left: 0.25rem solid #1cc88a !important;
-    }
-    .border-left-info {
-        border-left: 0.25rem solid #36b9cc !important;
-    }
-    .border-left-warning {
-        border-left: 0.25rem solid #f6c23e !important;
-    }
-    .border-left-danger {
-        border-left: 0.25rem solid #e74a3b !important;
-    }
-    .text-xs {
-        font-size: 0.7rem;
-    }
+    /* Custom Badge Styles for Bootstrap 4 compatibility */
     .badge {
-        font-size: 0.75em;
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.375rem;
     }
-    
-    .text-gray-800, .text-white {
-        color: #333 !important;
+
+    .bg-success {
+        background-color: #28a745 !important;
     }
-    
-    .card-body {
-        color: #333 !important;
+
+    .bg-danger {
+        background-color: #dc3545 !important;
     }
-    
+
+    .bg-warning {
+        background-color: #ffc107 !important;
+    }
+
+    .bg-secondary {
+        background-color: #6c757d !important;
+    }
+
+    .bg-info {
+        background-color: #17a2b8 !important;
+    }
+
+    .text-white {
+        color: #fff !important;
+    }
+
+    .text-dark {
+        color: #343a40 !important;
+    }
+
+    /* Card border styles */
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+    .border-left-danger { border-left: 0.25rem solid #e74a3b !important; }
+    .text-xs { font-size: 0.7rem; }
+
+    /* Table improvements */
     .table td, .table th {
-        color: #333 !important;
+        vertical-align: middle;
     }
 
-    .form-check-input:checked {
-        background-color: #4e73df;
-        border-color: #4e73df;
+    .table-responsive {
+        border: none;
     }
 
-    .pagination .page-link {
-        color: #4e73df;
+    /* Button improvements */
+    .btn-group .btn {
+        margin-right: 2px;
     }
 
-    .pagination .page-item.active .page-link {
-        background-color: #4e73df;
-        border-color: #4e73df;
+    .btn-group .btn:last-child {
+        margin-right: 0;
     }
 </style>

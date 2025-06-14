@@ -1,0 +1,358 @@
+﻿@page
+@using web_lab_4.Areas.Identity.Pages.Account.Manage
+@model TwoFactorAuthenticationModel
+@{
+    ViewData["Title"] = "Two-Factor Authentication (2FA)";
+    ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-4">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user-cog me-2"></i>Account Management
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <partial name="_ManageNav" />
+                </div>
+            </div>
+
+            <!-- 2FA Status Card -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>2FA Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        @if (Model.Is2faEnabled)
+                        {
+                            <i class="fas fa-shield-check fa-3x text-success mb-2"></i>
+                            <h6 class="text-success">Protected</h6>
+                            <small class="text-muted">2FA is active</small>
+                        }
+                        else
+                        {
+                            <i class="fas fa-shield-exclamation fa-3x text-warning mb-2"></i>
+                            <h6 class="text-warning">Vulnerable</h6>
+                            <small class="text-muted">Enable 2FA for security</small>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt text-primary me-2"></i>@ViewData["Title"]
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Message -->
+                    <partial name="_StatusMessage" for="StatusMessage" />
+
+                    <!-- 2FA Status Alert -->
+                    @if (Model.Is2faEnabled)
+                    {
+                        <div class="alert alert-success">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="mb-1">Two-Factor Authentication is Enabled</h6>
+                                    <small>Your account has an additional layer of security protection.</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="mb-1">Two-Factor Authentication is Disabled</h6>
+                                    <small>Enable 2FA to add an extra layer of security to your account.</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        @if (Model.Is2faEnabled)
+                        {
+                            <!-- Recovery Codes -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-key me-2"></i>Recovery Codes
+                                        </h6>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <p class="mb-3">
+                                            You have <strong>@Model.RecoveryCodesLeft</strong> recovery codes remaining.
+                                        </p>
+                                        <div class="mt-auto">
+                                            <div class="d-grid gap-2">
+                                                @if (Model.RecoveryCodesLeft == 0)
+                                                {
+                                                    <a asp-page="./GenerateRecoveryCodes" class="btn btn-danger">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>Generate New Codes
+                                                    </a>
+                                                }
+                                                else if (Model.RecoveryCodesLeft <= 3)
+                                                {
+                                                    <a asp-page="./GenerateRecoveryCodes" class="btn btn-warning">
+                                                        <i class="fas fa-sync me-2"></i>Generate New Codes
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a asp-page="./ShowRecoveryCodes" class="btn btn-outline-warning">
+                                                        <i class="fas fa-eye me-2"></i>Show Recovery Codes
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Authenticator App -->
+                            @if (Model.HasAuthenticator)
+                            {
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-mobile-alt me-2"></i>Authenticator App
+                                            </h6>
+                                        </div>
+                                        <div class="card-body d-flex flex-column">
+                                            <p class="mb-3">
+                                                <i class="fas fa-check text-success me-2"></i>
+                                                Authenticator app is configured and active.
+                                            </p>
+                                            <div class="mt-auto">
+                                                <div class="d-grid gap-2">
+                                                    <a asp-page="./ResetAuthenticator" class="btn btn-outline-danger">
+                                                        <i class="fas fa-sync me-2"></i>Reset Authenticator
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Disable 2FA -->
+                            <div class="col-12">
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-times-circle me-2"></i>Disable Two-Factor Authentication
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <p class="mb-0">
+                                                    <strong>Warning:</strong> Disabling 2FA will make your account less secure. 
+                                                    You will only be protected by your password.
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <a asp-page="./Disable2fa" class="btn btn-danger">
+                                                    <i class="fas fa-shield-times me-2"></i>Disable 2FA
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Enable 2FA -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-mobile-alt me-2"></i>Authenticator App
+                                        </h6>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <p class="mb-3">
+                                            Use an authenticator app like Google Authenticator, Microsoft Authenticator, 
+                                            or Authy to generate verification codes.
+                                        </p>
+                                        <div class="mt-auto">
+                                            <div class="d-grid">
+                                                <a asp-page="./EnableAuthenticator" class="btn btn-primary">
+                                                    <i class="fas fa-plus me-2"></i>Enable Authenticator
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefits of 2FA -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-star me-2"></i>Why Enable 2FA?
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2">
+                                                <i class="fas fa-shield-check text-success me-2"></i>
+                                                Enhanced account security
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fas fa-lock text-success me-2"></i>
+                                                Protection against password theft
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fas fa-eye text-success me-2"></i>
+                                                Early detection of unauthorized access
+                                            </li>
+                                            <li class="mb-0">
+                                                <i class="fas fa-medal text-success me-2"></i>
+                                                Industry-standard security practice
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- How 2FA Works -->
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-question-circle me-2"></i>How Two-Factor Authentication Works
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 text-center mb-3">
+                                    <i class="fas fa-user-lock fa-3x text-primary mb-2"></i>
+                                    <h6>1. Enter Password</h6>
+                                    <p class="small text-muted mb-0">
+                                        Sign in with your email and password as usual
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-center mb-3">
+                                    <i class="fas fa-mobile-alt fa-3x text-success mb-2"></i>
+                                    <h6>2. Get Code</h6>
+                                    <p class="small text-muted mb-0">
+                                        Open your authenticator app to get a 6-digit code
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-center mb-3">
+                                    <i class="fas fa-check-circle fa-3x text-info mb-2"></i>
+                                    <h6>3. Enter Code</h6>
+                                    <p class="small text-muted mb-0">
+                                        Enter the code to complete secure sign-in
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Back Button -->
+                    <div class="mt-4 text-center">
+                        <a asp-page="./Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Animate cards on load
+            $('.card').each(function(index) {
+                $(this).css('opacity', '0').delay(index * 100).animate({ opacity: 1 }, 500);
+            });
+
+            // Confirmation for dangerous actions
+            $('a[asp-page="./Disable2fa"], a[asp-page="./ResetAuthenticator"]').on('click', function(e) {
+                const action = $(this).text().trim();
+                const confirmed = confirm(`Are you sure you want to ${action.toLowerCase()}? This action cannot be undone.`);
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .nav-pills .nav-link {
+            color: #6c757d;
+            border-radius: 0;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+        }
+
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .nav-pills .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .badge {
+            font-size: 0.75rem;
+        }
+
+        /* Sửa lại keyframes animation */
+        @@keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .text-warning {
+            animation: pulse 2s infinite;
+        }
+    </style>
+}

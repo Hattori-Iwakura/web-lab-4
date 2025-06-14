@@ -1,0 +1,284 @@
+﻿@page
+@using web_lab_4.Areas.Identity.Pages.Account.Manage
+@model EnableAuthenticatorModel
+@{
+    ViewData["Title"] = "Configure Authenticator App";
+    ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-4">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user-cog me-2"></i>Account Management
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <partial name="_ManageNav" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fas fa-mobile-alt text-primary me-2"></i>@ViewData["Title"]
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <partial name="_StatusMessage" for="StatusMessage" />
+
+                    <!-- Step-by-step Guide -->
+                    <div class="row">
+                        <!-- Step 1: Download App -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <span class="badge bg-light text-primary me-2">1</span>
+                                        Download Authenticator App
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-3">Choose and install one of these apps:</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="https://apps.apple.com/app/google-authenticator/id388497605" 
+                                           target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="fab fa-google me-2"></i>Google Authenticator
+                                        </a>
+                                        <a href="https://www.microsoft.com/en-us/account/authenticator" 
+                                           target="_blank" class="btn btn-outline-info btn-sm">
+                                            <i class="fab fa-microsoft me-2"></i>Microsoft Authenticator
+                                        </a>
+                                        <a href="https://authy.com/download/" 
+                                           target="_blank" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-shield-alt me-2"></i>Authy
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Scan QR Code -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <span class="badge bg-light text-success me-2">2</span>
+                                        Scan QR Code
+                                    </h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <p class="mb-3">Scan this QR code with your authenticator app:</p>
+                                    <div class="mb-3">
+                                        <div id="qrCode" class="mx-auto" style="width: 200px; height: 200px; border: 2px solid #dee2e6;"></div>
+                                    </div>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleManualEntry()">
+                                        <i class="fas fa-keyboard me-2"></i>Enter key manually
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Entry (Hidden by default) -->
+                    <div id="manualEntry" class="card border-warning mb-4" style="display: none;">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-keyboard me-2"></i>Manual Entry
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p>If you can't scan the QR code, enter this key manually:</p>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="@Model.SharedKey" readonly id="sharedKey">
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard()">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Account: @User.Identity.Name</small>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Verify Code -->
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <span class="badge bg-light text-info me-2">3</span>
+                                Verify Setup
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-3">Enter the 6-digit code from your authenticator app to verify setup:</p>
+                            
+                            <form id="send-code" method="post">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="Input.Code" class="form-label fw-bold">
+                                                <i class="fas fa-key me-2"></i>Verification Code
+                                            </label>
+                                            <input asp-for="Input.Code" 
+                                                   class="form-control form-control-lg text-center" 
+                                                   placeholder="000000" 
+                                                   maxlength="6"
+                                                   autocomplete="off" />
+                                            <span asp-validation-for="Input.Code" class="text-danger"></span>
+                                            <div class="form-text">
+                                                <i class="fas fa-clock me-1"></i>Code changes every 30 seconds
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fas fa-check me-2"></i>Verify & Enable 2FA
+                                            </button>
+                                            <a asp-page="./TwoFactorAuthentication" class="btn btn-outline-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <h6><i class="fas fa-lightbulb me-2"></i>Tips:</h6>
+                                            <ul class="mb-0 small">
+                                                <li>Make sure your device time is correct</li>
+                                                <li>The code is case-sensitive</li>
+                                                <li>Don't include spaces when entering</li>
+                                                <li>If it doesn't work, wait for a new code</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/qrcode/qrcode.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Generate QR Code
+            const qrCodeData = '@Html.Raw(Model.AuthenticatorUri)';
+            const qr = qrcode(0, 'M');
+            qr.addData(qrCodeData);
+            qr.make();
+            document.getElementById('qrCode').innerHTML = qr.createImgTag(4);
+
+            // Auto-format verification code input
+            $('#Input_Code').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                $(this).val(value);
+                
+                if (value.length === 6) {
+                    $(this).addClass('is-valid');
+                } else {
+                    $(this).removeClass('is-valid');
+                }
+            });
+
+            // Form submission
+            $('#send-code').on('submit', function() {
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                
+                submitBtn.prop('disabled', true)
+                         .html('<i class="fas fa-spinner fa-spin me-2"></i>Verifying...');
+                
+                setTimeout(function() {
+                    if ($('.text-danger:visible').length > 0) {
+                        submitBtn.prop('disabled', false).html(originalText);
+                    }
+                }, 1000);
+            });
+        });
+
+        function toggleManualEntry() {
+            const manualEntry = document.getElementById('manualEntry');
+            if (manualEntry.style.display === 'none') {
+                manualEntry.style.display = 'block';
+            } else {
+                manualEntry.style.display = 'none';
+            }
+        }
+
+        function copyToClipboard() {
+            const sharedKey = document.getElementById('sharedKey');
+            sharedKey.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const button = event.target.closest('button');
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check text-success"></i>';
+            
+            setTimeout(function() {
+                button.innerHTML = originalHtml;
+            }, 2000);
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        .nav-pills .nav-link {
+            color: #6c757d;
+            border-radius: 0;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+        }
+
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .nav-pills .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        #Input_Code {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+        }
+
+        #qrCode img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .badge {
+            font-size: 1rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+}

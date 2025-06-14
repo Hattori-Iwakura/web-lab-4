@@ -1,0 +1,95 @@
+﻿@page
+@using web_lab_4.Areas.Identity.Pages.Account
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = "Confirm Email";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fas fa-envelope-check text-primary me-2"></i>@ViewData["Title"]
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    @if (ViewData["StatusMessage"] != null)
+                    {
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                            <h5 class="mb-3">Email Confirmed Successfully!</h5>
+                            <p class="mb-0">@ViewData["StatusMessage"]</p>
+                        </div>
+
+                        <!-- Welcome Message -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-star me-2"></i>Welcome to FitSup Community!
+                                </h6>
+                                <p class="card-text">Your account is now fully activated. You can now:</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>Browse premium supplements</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Access member discounts</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>Track your orders</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Get expert nutrition advice</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-primary w-100">
+                                    <i class="fas fa-home me-2"></i>Go to Home
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a asp-area="" asp-controller="Product" asp-action="Index" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                            <h5 class="mb-3">Email Confirmation Required</h5>
+                            <p class="mb-0">Please check your email and click the confirmation link to verify your account.</p>
+                        </div>
+
+                        <!-- Help Section -->
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-question-circle me-2"></i>Need Help?
+                                </h6>
+                                <p class="card-text">If you didn't receive the confirmation email:</p>
+                                <div class="d-grid gap-2">
+                                    <a asp-page="./ResendEmailConfirmation" class="btn btn-outline-secondary">
+                                        <i class="fas fa-paper-plane me-2"></i>Resend Confirmation Email
+                                    </a>
+                                    <a asp-area="" asp-controller="Home" asp-action="Contact" class="btn btn-outline-info">
+                                        <i class="fas fa-phone me-2"></i>Contact Support
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

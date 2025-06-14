@@ -318,17 +318,6 @@
                                         @(description.Length > maxLength ? description.Substring(0, maxLength) + "..." : description)
                                     </p>
                                     
-                                    <!-- Price and Category -->
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="h6 text-primary mb-0">@product.Price.ToString("C")</span>
-                                            @if (product.Category != null)
-                                            {
-                                                <span class="badge bg-secondary small">@product.Category.Name</span>
-                                            }
-                                        </div>
-                                    </div>
-
                                     <!-- Product Rating -->
                                     <div class="product-rating mb-2">
                                         @{
@@ -353,6 +342,17 @@
                                             }
                                             <span class="rating-text text-muted small">No reviews yet</span>
                                         }
+                                    </div>
+
+                                    <!-- Price and Category -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="h6 text-primary mb-0">@product.Price.ToString("C")</span>
+                                            @if (product.Category != null)
+                                            {
+                                                <span class="badge bg-secondary small">@product.Category.Name</span>
+                                            }
+                                        </div>
                                     </div>
 
                                     <!-- Action Buttons -->

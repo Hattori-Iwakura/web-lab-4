@@ -26,42 +26,34 @@
     var flavors = ViewBag.Flavors as IEnumerable<string> ?? new List<string>();
 }
 
-<div class="container my-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            <i class="fas fa-box text-primary"></i> Our Products
-            <small class="text-muted">(@totalProducts products found)</small>
-        </h2>
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-area="Admin" asp-controller="Product" asp-action="Add" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Product
-            </a>
-        }
-    </div>
-
-    <!-- Filters Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
+<div class="container-fluid my-4">
+    <div class="row">
+        <!-- Left Sidebar - Filters -->
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="sticky-top" style="top: 20px;">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-filter"></i> Filters
-                        <button class="btn btn-link btn-sm float-end" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
+                        <i class="fas fa-filter text-primary"></i> Filters
                     </h5>
+                    <!-- Mobile toggle button -->
+                    <button class="btn btn-outline-primary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#filterSidebar" aria-expanded="false">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
                 </div>
-                <div class="collapse show" id="filterCollapse">
-                    <div class="card-body">
-                        <form asp-action="Index" method="get" id="filterForm">
-                            <div class="row g-3">
+
+                <!-- Filters Card -->
+                <div class="collapse d-md-block" id="filterSidebar">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-3">
+                            <form asp-action="Index" method="get" id="filterForm">
                                 <!-- Search -->
-                                <div class="col-md-4">
-                                    <label class="form-label">Search Products</label>
-                                    <div class="input-group">
-                                        <input type="text" name="searchTerm" value="@searchTerm" class="form-control" placeholder="Search by name or description...">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-search"></i> Search
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="searchTerm" value="@searchTerm" class="form-control" placeholder="Search products...">
                                         <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
                                             <i class="fas fa-times"></i>
                                         </button>
@@ -69,77 +61,74 @@
                                 </div>
 
                                 <!-- Category Filter -->
-                                <div class="col-md-4">
-                                    <label class="form-label">Category</label>
-                                    <select name="categoryId" class="form-select">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-tags"></i> Category
+                                    </label>
+                                    <select name="categoryId" class="form-select form-select-sm">
                                         <option value="">All Categories</option>
                                         @foreach (var category in categories)
                                         {
-                                            @if (selectedCategory == category.Id.ToString())
-                                            {
-                                                <option value="@category.Id" selected>@category.Name</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@category.Id">@category.Name</option>
-                                            }
+                                            <option value="@category.Id" selected="@(selectedCategory == category.Id.ToString())">
+                                                @category.Name
+                                            </option>
                                         }
                                     </select>
                                 </div>
 
                                 <!-- Brand Filter -->
-                                <div class="col-md-4">
-                                    <label class="form-label">Brand</label>
-                                    <select name="brand" class="form-select">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-copyright"></i> Brand
+                                    </label>
+                                    <select name="brand" class="form-select form-select-sm">
                                         <option value="">All Brands</option>
                                         @foreach (var brandName in brands)
                                         {
-                                            @if (brand == brandName)
-                                            {
-                                                <option value="@brandName" selected>@brandName</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@brandName">@brandName</option>
-                                            }
+                                            <option value="@brandName" selected="@(brand == brandName)">
+                                                @brandName
+                                            </option>
                                         }
                                     </select>
                                 </div>
 
                                 <!-- Price Range -->
-                                <div class="col-md-4">
-                                    <label class="form-label">Min Price</label>
-                                    <input type="number" name="minPrice" value="@minPrice" class="form-control" placeholder="$0" min="0" step="0.01">
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label">Max Price</label>
-                                    <input type="number" name="maxPrice" value="@maxPrice" class="form-control" placeholder="$1000" min="0" step="0.01">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-dollar-sign"></i> Price Range
+                                    </label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="number" name="minPrice" value="@minPrice" class="form-control form-control-sm" placeholder="Min" min="0" step="0.01">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" name="maxPrice" value="@maxPrice" class="form-control form-control-sm" placeholder="Max" min="0" step="0.01">
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Flavor Filter -->
-                                <div class="col-md-4">
-                                    <label class="form-label">Flavor</label>
-                                    <select name="flavor" class="form-select">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-leaf"></i> Flavor
+                                    </label>
+                                    <select name="flavor" class="form-select form-select-sm">
                                         <option value="">All Flavors</option>
                                         @foreach (var flavorName in flavors)
                                         {
-                                            @if (flavor == flavorName)
-                                            {
-                                                <option value="@flavorName" selected>@flavorName</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@flavorName">@flavorName</option>
-                                            }
+                                            <option value="@flavorName" selected="@(flavor == flavorName)">
+                                                @flavorName
+                                            </option>
                                         }
                                     </select>
                                 </div>
 
                                 <!-- Sort Options -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Sort By</label>
-                                    <select name="sortBy" class="form-select">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-sort"></i> Sort By
+                                    </label>
+                                    <select name="sortBy" class="form-select form-select-sm">
                                         <option value="">Default</option>
                                         @{
                                             var sortOptions = new[]
@@ -153,349 +142,366 @@
                                         }
                                         @foreach (var option in sortOptions)
                                         {
-                                            @if (sortBy == option.Value)
-                                            {
-                                                <option value="@option.Value" selected>@option.Text</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@option.Value">@option.Text</option>
-                                            }
+                                            <option value="@option.Value" selected="@(sortBy == option.Value)">
+                                                @option.Text
+                                            </option>
                                         }
                                     </select>
                                 </div>
 
                                 <!-- Filter Buttons -->
-                                <div class="col-md-6 d-flex align-items-end">
-                                    <div class="btn-group w-100">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-search"></i> Apply Filters
-                                        </button>
-                                        <a asp-action="Index" class="btn btn-outline-secondary">
-                                            <i class="fas fa-undo"></i> Clear All
-                                        </a>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-search"></i> Apply Filters
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-undo"></i> Clear All
+                                    </a>
+                                </div>
+
+                                <!-- Hidden field for pagination -->
+                                <input type="hidden" name="page" value="1">
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Active Filters Display -->
+                    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedCategory) || !string.IsNullOrEmpty(brand) || !string.IsNullOrEmpty(flavor) || !string.IsNullOrEmpty(minPrice) || !string.IsNullOrEmpty(maxPrice))
+                    {
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-filter"></i> Active Filters
+                                </h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if (!string.IsNullOrEmpty(searchTerm))
+                                    {
+                                        <span class="badge bg-primary">
+                                            "@searchTerm"
+                                            <a href="@Url.Action("Index", new { categoryId = selectedCategory, brand = brand, flavor = flavor, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
+                                        </span>
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(selectedCategory))
+                                    {
+                                        <span class="badge bg-info">
+                                            @categories.FirstOrDefault(c => c.Id.ToString() == selectedCategory)?.Name
+                                            <a href="@Url.Action("Index", new { searchTerm = searchTerm, brand = brand, flavor = flavor, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
+                                        </span>
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(brand))
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            @brand
+                                            <a href="@Url.Action("Index", new { searchTerm = searchTerm, categoryId = selectedCategory, flavor = flavor, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-dark ms-1">×</a>
+                                        </span>
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(flavor))
+                                    {
+                                        <span class="badge bg-success">
+                                            @flavor
+                                            <a href="@Url.Action("Index", new { searchTerm = searchTerm, categoryId = selectedCategory, brand = brand, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
+                                        </span>
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(minPrice) || !string.IsNullOrEmpty(maxPrice))
+                                    {
+                                        <span class="badge bg-secondary">
+                                            $@(minPrice ?? "0") - $@(maxPrice ?? "∞")
+                                            <a href="@Url.Action("Index", new { searchTerm = searchTerm, categoryId = selectedCategory, brand = brand, flavor = flavor, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Content - Products -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="fas fa-box text-primary"></i> Our Products
+                        <small class="text-muted">(@totalProducts products found)</small>
+                    </h2>
+                </div>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-area="Admin" asp-controller="Product" asp-action="Add" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Product
+                    </a>
+                }
+            </div>
+
+            <!-- Products Grid -->
+            @if (Model.Any())
+            {
+                <!-- Grid Container with responsive columns -->
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-3 g-4 mb-4">
+                    @foreach (var product in Model)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm product-card">
+                                <div class="position-relative">
+                                    @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                    {
+                                        <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 250px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    }
+                                    
+                                    <!-- Product Badges -->
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        @if (product.IsExpired)
+                                        {
+                                            <span class="badge bg-danger mb-1 d-block">Expired</span>
+                                        }
+                                        else if (product.StockQuantity <= 0)
+                                        {
+                                            <span class="badge bg-warning text-dark mb-1 d-block">Out of Stock</span>
+                                        }
+                                        else if (product.StockQuantity <= 10)
+                                        {
+                                            <span class="badge bg-info mb-1 d-block">Low Stock</span>
+                                        }
+                                        
+                                        @if (product.Price < 50) // Sale badge for products under $50
+                                        {
+                                            <span class="badge bg-success d-block">Sale!</span>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <!-- Product Title -->
+                                    <h6 class="card-title text-truncate" title="@product.Name">@product.Name</h6>
+                                    
+                                    <!-- Brand and Flavor -->
+                                    @if (!string.IsNullOrEmpty(product.Brand) || !string.IsNullOrEmpty(product.Flavor))
+                                    {
+                                        <div class="mb-2">
+                                            @if (!string.IsNullOrEmpty(product.Brand))
+                                            {
+                                                <small class="text-muted d-block">@product.Brand</small>
+                                            }
+                                            @if (!string.IsNullOrEmpty(product.Flavor))
+                                            {
+                                                <span class="badge bg-info text-dark small">@product.Flavor</span>
+                                            }
+                                        </div>
+                                    }
+                                    
+                                    <!-- Weight Display -->
+                                    @if (product.Weight > 0)
+                                    {
+                                        <small class="text-muted">@product.DisplayWeight</small>
+                                    }
+                                    
+                                    <!-- Description -->
+                                    <p class="card-text text-muted small flex-grow-1">
+                                        @{
+                                            var description = product.Description ?? "";
+                                            var maxLength = 80;
+                                        }
+                                        @(description.Length > maxLength ? description.Substring(0, maxLength) + "..." : description)
+                                    </p>
+                                    
+                                    <!-- Price and Category -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="h6 text-primary mb-0">@product.Price.ToString("C")</span>
+                                            @if (product.Category != null)
+                                            {
+                                                <span class="badge bg-secondary small">@product.Category.Name</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="mt-auto">
+                                        <div class="row g-1">
+                                            <div class="col-8">
+                                                @if (product.IsAvailable && product.IsInStock && !product.IsExpired)
+                                                {
+                                                    <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
+                                                        <input type="hidden" name="productId" value="@product.Id" />
+                                                        <input type="hidden" name="quantity" value="1" />
+                                                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                            <i class="fas fa-cart-plus"></i> Add
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-secondary btn-sm w-100" disabled>
+                                                        <i class="fas fa-ban"></i> Unavailable
+                                                    </button>
+                                                }
+                                            </div>
+                                            <div class="col-4">
+                                                <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary btn-sm w-100" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <div class="row g-1 mt-1">
+                                                <div class="col-6">
+                                                    <a asp-area="Admin" asp-controller="Product" asp-action="Update" asp-route-id="@product.Id" class="btn btn-warning btn-sm w-100">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                                <div class="col-6">
+                                                    <a asp-area="Admin" asp-controller="Product" asp-action="Delete" asp-route-id="@product.Id" class="btn btn-danger btn-sm w-100">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Hidden field for pagination -->
-                            <input type="hidden" name="page" value="1">
-                        </form>
-                    </div>
+                        </div>
+                    }
                 </div>
-            </div>
+
+                <!-- Pagination -->
+                @if (totalPages > 1)
+                {
+                    <nav aria-label="Product pagination">
+                        <ul class="pagination justify-content-center">
+                            <!-- Previous Page -->
+                            <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { 
+                                    searchTerm = searchTerm, 
+                                    categoryId = selectedCategory, 
+                                    brand = brand, 
+                                    flavor = flavor, 
+                                    minPrice = minPrice, 
+                                    maxPrice = maxPrice, 
+                                    sortBy = sortBy, 
+                                    page = currentPage - 1 
+                                })">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+
+                            <!-- First Page -->
+                            @if (currentPage > 3)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        searchTerm = searchTerm, 
+                                        categoryId = selectedCategory, 
+                                        brand = brand, 
+                                        flavor = flavor, 
+                                        minPrice = minPrice, 
+                                        maxPrice = maxPrice, 
+                                        sortBy = sortBy, 
+                                        page = 1 
+                                    })">1</a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            }
+
+                            <!-- Page Numbers -->
+                            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        searchTerm = searchTerm, 
+                                        categoryId = selectedCategory, 
+                                        brand = brand, 
+                                        flavor = flavor, 
+                                        minPrice = minPrice, 
+                                        maxPrice = maxPrice, 
+                                        sortBy = sortBy, 
+                                        page = i 
+                                    })">@i</a>
+                                </li>
+                            }
+
+                            <!-- Last Page -->
+                            @if (currentPage < totalPages - 2)
+                            {
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        searchTerm = searchTerm, 
+                                        categoryId = selectedCategory, 
+                                        brand = brand, 
+                                        flavor = flavor, 
+                                        minPrice = minPrice, 
+                                        maxPrice = maxPrice, 
+                                        sortBy = sortBy, 
+                                        page = totalPages 
+                                    })">@totalPages</a>
+                                </li>
+                            }
+
+                            <!-- Next Page -->
+                            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { 
+                                    searchTerm = searchTerm, 
+                                    categoryId = selectedCategory, 
+                                    brand = brand, 
+                                    flavor = flavor, 
+                                    minPrice = minPrice, 
+                                    maxPrice = maxPrice, 
+                                    sortBy = sortBy, 
+                                    page = currentPage + 1 
+                                })">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Pagination Info -->
+                    <div class="text-center text-muted">
+                        Showing page @currentPage of @totalPages 
+                        (@((currentPage - 1) * pageSize + 1) - @Math.Min(currentPage * pageSize, totalProducts) of @totalProducts products)
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- No Products Found -->
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Products Found</h4>
+                    <p class="text-muted">Try adjusting your search criteria or browse all products.</p>
+                    <a asp-action="Index" class="btn btn-primary">
+                        <i class="fas fa-refresh"></i> Show All Products
+                    </a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-area="Admin" asp-controller="Product" asp-action="Add" class="btn btn-success ms-2">
+                            <i class="fas fa-plus"></i> Add New Product
+                        </a>
+                    }
+                </div>
+            }
         </div>
     </div>
-
-    <!-- Active Filters Display -->
-    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedCategory) || !string.IsNullOrEmpty(brand) || !string.IsNullOrEmpty(flavor) || !string.IsNullOrEmpty(minPrice) || !string.IsNullOrEmpty(maxPrice))
-    {
-        <div class="mb-3">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <span class="text-muted">Active filters:</span>
-                
-                @if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    <span class="badge bg-primary">
-                        Search: "@searchTerm"
-                        <a href="@Url.Action("Index", new { categoryId = selectedCategory, brand = brand, flavor = flavor, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
-                    </span>
-                }
-                
-                @if (!string.IsNullOrEmpty(selectedCategory))
-                {
-                    <span class="badge bg-info">
-                        Category: "@categories.FirstOrDefault(c => c.Id.ToString() == selectedCategory)?.Name"
-                        <a href="@Url.Action("Index", new { searchTerm = searchTerm, brand = brand, flavor = flavor, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
-                    </span>
-                }
-                
-                @if (!string.IsNullOrEmpty(brand))
-                {
-                    <span class="badge bg-warning text-dark">
-                        Brand: "@brand"
-                        <a href="@Url.Action("Index", new { searchTerm = searchTerm, categoryId = selectedCategory, flavor = flavor, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-dark ms-1">×</a>
-                    </span>
-                }
-                
-                @if (!string.IsNullOrEmpty(flavor))
-                {
-                    <span class="badge bg-success">
-                        Flavor: "@flavor"
-                        <a href="@Url.Action("Index", new { searchTerm = searchTerm, categoryId = selectedCategory, brand = brand, minPrice = minPrice, maxPrice = maxPrice, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
-                    </span>
-                }
-                
-                @if (!string.IsNullOrEmpty(minPrice) || !string.IsNullOrEmpty(maxPrice))
-                {
-                    <span class="badge bg-secondary">
-                        Price: $@(minPrice ?? "0") - $@(maxPrice ?? "∞")
-                        <a href="@Url.Action("Index", new { searchTerm = searchTerm, categoryId = selectedCategory, brand = brand, flavor = flavor, sortBy = sortBy, page = 1 })" class="text-white ms-1">×</a>
-                    </span>
-                }
-            </div>
-        </div>
-    }
-
-    <!-- Products Grid -->
-    @if (Model.Any())
-    {
-        <!-- Grid Container with 4 products per row -->
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-4">
-            @foreach (var product in Model)
-            {
-                <div class="col">
-                    <div class="card h-100 shadow-sm product-card">
-                        <div class="position-relative">
-                            @if (!string.IsNullOrEmpty(product.ImageUrl))
-                            {
-                                <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 250px; object-fit: cover;">
-                            }
-                            else
-                            {
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
-                                    <i class="fas fa-image fa-3x text-muted"></i>
-                                </div>
-                            }
-                            
-                            <!-- Product Badges -->
-                            <div class="position-absolute top-0 end-0 m-2">
-                                @if (product.IsExpired)
-                                {
-                                    <span class="badge bg-danger mb-1 d-block">Expired</span>
-                                }
-                                else if (product.StockQuantity <= 0)
-                                {
-                                    <span class="badge bg-warning text-dark mb-1 d-block">Out of Stock</span>
-                                }
-                                else if (product.StockQuantity <= 10)
-                                {
-                                    <span class="badge bg-info mb-1 d-block">Low Stock</span>
-                                }
-                                
-                                @if (product.Price < 50) // Sale badge for products under $50
-                                {
-                                    <span class="badge bg-success d-block">Sale!</span>
-                                }
-                            </div>
-                        </div>
-                        
-                        <div class="card-body d-flex flex-column">
-                            <!-- Product Title -->
-                            <h6 class="card-title text-truncate" title="@product.Name">@product.Name</h6>
-                            
-                            <!-- Brand and Flavor -->
-                            @if (!string.IsNullOrEmpty(product.Brand) || !string.IsNullOrEmpty(product.Flavor))
-                            {
-                                <div class="mb-2">
-                                    @if (!string.IsNullOrEmpty(product.Brand))
-                                    {
-                                        <small class="text-muted d-block">@product.Brand</small>
-                                    }
-                                    @if (!string.IsNullOrEmpty(product.Flavor))
-                                    {
-                                        <span class="badge bg-info text-dark small">@product.Flavor</span>
-                                    }
-                                </div>
-                            }
-                            
-                            <!-- Weight Display -->
-                            @if (product.Weight > 0)
-                            {
-                                <small class="text-muted">@product.DisplayWeight</small>
-                            }
-                            
-                            <!-- Description -->
-                            <p class="card-text text-muted small flex-grow-1">
-                                @{
-                                    var description = product.Description ?? "";
-                                    var maxLength = 80;
-                                }
-                                @(description.Length > maxLength ? description.Substring(0, maxLength) + "..." : description)
-                            </p>
-                            
-                            <!-- Price and Category -->
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="h6 text-primary mb-0">@product.Price.ToString("C")</span>
-                                    @if (product.Category != null)
-                                    {
-                                        <span class="badge bg-secondary small">@product.Category.Name</span>
-                                    }
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="mt-auto">
-                                <div class="row g-1">
-                                    <div class="col-8">
-                                        @if (product.IsAvailable && product.IsInStock && !product.IsExpired)
-                                        {
-                                            <form asp-controller="ShoppingCart" asp-action="AddToCart" method="post" class="add-to-cart-form">
-                                                <input type="hidden" name="productId" value="@product.Id" />
-                                                <input type="hidden" name="quantity" value="1" />
-                                                <button type="submit" class="btn btn-primary btn-sm w-100">
-                                                    <i class="fas fa-cart-plus"></i> Add
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <button class="btn btn-secondary btn-sm w-100" disabled>
-                                                <i class="fas fa-ban"></i> Unavailable
-                                            </button>
-                                        }
-                                    </div>
-                                    <div class="col-4">
-                                        <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary btn-sm w-100" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                                
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <div class="row g-1 mt-1">
-                                        <div class="col-6">
-                                            <a asp-area="Admin" asp-controller="Product" asp-action="Update" asp-route-id="@product.Id" class="btn btn-warning btn-sm w-100">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                        </div>
-                                        <div class="col-6">
-                                            <a asp-area="Admin" asp-controller="Product" asp-action="Delete" asp-route-id="@product.Id" class="btn btn-danger btn-sm w-100">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <!-- Pagination -->
-        @if (totalPages > 1)
-        {
-            <nav aria-label="Product pagination">
-                <ul class="pagination justify-content-center">
-                    <!-- Previous Page -->
-                    <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-                        <a class="page-link" href="@Url.Action("Index", new { 
-                            searchTerm = searchTerm, 
-                            categoryId = selectedCategory, 
-                            brand = brand, 
-                            flavor = flavor, 
-                            minPrice = minPrice, 
-                            maxPrice = maxPrice, 
-                            sortBy = sortBy, 
-                            page = currentPage - 1 
-                        })">
-                            <i class="fas fa-chevron-left"></i> Previous
-                        </a>
-                    </li>
-
-                    <!-- First Page -->
-                    @if (currentPage > 3)
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="@Url.Action("Index", new { 
-                                searchTerm = searchTerm, 
-                                categoryId = selectedCategory, 
-                                brand = brand, 
-                                flavor = flavor, 
-                                minPrice = minPrice, 
-                                maxPrice = maxPrice, 
-                                sortBy = sortBy, 
-                                page = 1 
-                            })">1</a>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    }
-
-                    <!-- Page Numbers -->
-                    @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
-                    {
-                        <li class="page-item @(i == currentPage ? "active" : "")">
-                            <a class="page-link" href="@Url.Action("Index", new { 
-                                searchTerm = searchTerm, 
-                                categoryId = selectedCategory, 
-                                brand = brand, 
-                                flavor = flavor, 
-                                minPrice = minPrice, 
-                                maxPrice = maxPrice, 
-                                sortBy = sortBy, 
-                                page = i 
-                            })">@i</a>
-                        </li>
-                    }
-
-                    <!-- Last Page -->
-                    @if (currentPage < totalPages - 2)
-                    {
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="@Url.Action("Index", new { 
-                                searchTerm = searchTerm, 
-                                categoryId = selectedCategory, 
-                                brand = brand, 
-                                flavor = flavor, 
-                                minPrice = minPrice, 
-                                maxPrice = maxPrice, 
-                                sortBy = sortBy, 
-                                page = totalPages 
-                            })">@totalPages</a>
-                        </li>
-                    }
-
-                    <!-- Next Page -->
-                    <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                        <a class="page-link" href="@Url.Action("Index", new { 
-                            searchTerm = searchTerm, 
-                            categoryId = selectedCategory, 
-                            brand = brand, 
-                            flavor = flavor, 
-                            minPrice = minPrice, 
-                            maxPrice = maxPrice, 
-                            sortBy = sortBy, 
-                            page = currentPage + 1 
-                        })">
-                            Next <i class="fas fa-chevron-right"></i>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-            <!-- Pagination Info -->
-            <div class="text-center text-muted">
-                Showing page @currentPage of @totalPages 
-                (@((currentPage - 1) * pageSize + 1) - @Math.Min(currentPage * pageSize, totalProducts) of @totalProducts products)
-            </div>
-        }
-    }
-    else
-    {
-        <!-- No Products Found -->
-        <div class="text-center py-5">
-            <i class="fas fa-search fa-4x text-muted mb-3"></i>
-            <h4 class="text-muted">No Products Found</h4>
-            <p class="text-muted">Try adjusting your search criteria or browse all products.</p>
-            <a asp-action="Index" class="btn btn-primary">
-                <i class="fas fa-refresh"></i> Show All Products
-            </a>
-            @if (User.IsInRole("Admin"))
-            {
-                <a asp-area="Admin" asp-controller="Product" asp-action="Add" class="btn btn-success ms-2">
-                    <i class="fas fa-plus"></i> Add New Product
-                </a>
-            }
-        </div>
-    }
 </div>
 
 <!-- Success/Error Messages -->
@@ -619,7 +625,7 @@
         // Smooth scroll to top when changing pages
         if (window.location.search.includes('page=')) {
             $('html, body').animate({
-                scrollTop: $(".container").offset().top - 100
+                scrollTop: $(".container-fluid").offset().top - 100
             }, 500);
         }
     </script>
@@ -679,6 +685,11 @@
             opacity: 0.8;
         }
         
+        /* Sticky sidebar */
+        .sticky-top {
+            z-index: 1020;
+        }
+        
         /* Grid responsive adjustments */
         @@media (max-width: 576px) {
             .row-cols-1 > * {
@@ -687,9 +698,16 @@
         }
         
         @@media (min-width: 992px) {
-            .row-cols-lg-4 > * {
+            .row-cols-lg-3 > * {
                 flex: 0 0 auto;
-                width: 25%;
+                width: 33.33333%;
+            }
+        }
+        
+        @@media (min-width: 1200px) {
+            .row-cols-xl-3 > * {
+                flex: 0 0 auto;
+                width: 33.33333%;
             }
         }
         
@@ -702,6 +720,28 @@
             .card {
                 min-height: auto;
             }
+        }
+        
+        /* Sidebar styling */
+        #filterSidebar .card {
+            border: 1px solid #dee2e6;
+        }
+        
+        #filterSidebar .form-label {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Mobile filter toggle */
+        @@media (max-width: 767.98px) {
+            #filterSidebar {
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* Improve form controls */
+        .form-select-sm, .form-control-sm {
+            font-size: 0.875rem;
         }
     </style>
 }

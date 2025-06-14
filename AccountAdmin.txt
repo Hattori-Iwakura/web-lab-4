@@ -1,5 +1,0 @@
-admin@blueachive.com
-Admin@123
-
-user@blueachive.com
-User@123

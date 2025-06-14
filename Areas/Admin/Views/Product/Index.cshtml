@@ -1,221 +1,473 @@
 @* filepath: Areas/Admin/Views/Product/Index.cshtml *@
-@model IEnumerable<web_lab_4.Models.Product>
+@model web_lab_4.Models.ViewModels.ProductFilterViewModel
 
 @{
     ViewData["Title"] = "Products Management";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-boxes"></i> Products Management
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <a asp-action="Add" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Product
-        </a>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-boxes"></i> Products Management
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a asp-action="Add" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Product
+            </a>
+        </div>
     </div>
-</div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Products</div>
-                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count()</div>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Products</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">@Model.TotalProducts</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Low Stock</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">@Model.LowStockCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Expired Products</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">@Model.ExpiredCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Available Products</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">@Model.AvailableCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Low Stock</div>
-                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count(p => p.StockQuantity <= 10)</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-danger shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Expired Products</div>
-                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count(p => p.IsExpired)</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Available Products</div>
-                        <div class="h5 mb-0 font-weight-bold text-dark">@Model.Count(p => p.IsAvailable && p.IsInStock)</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Products Table -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Products List</h6>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Image</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Weight</th>
-                        <th>Stock</th>
-                        <th>Expiry</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr class="@(item.IsExpired ? "table-danger" : item.StockQuantity <= 10 ? "table-warning" : "")">
-                            <td>
-                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+    <!-- Filter Panel -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-filter"></i> Filter Products
+                <button class="btn btn-sm btn-outline-primary float-right" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </h6>
+        </div>
+        <div class="collapse" id="filterCollapse">
+            <div class="card-body">
+                <form asp-action="Index" method="get">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="searchTerm" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="searchTerm" 
+                                   asp-for="Filter.SearchTerm" 
+                                   placeholder="Search by name, brand, description...">
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="categoryId" class="form-label">Category</label>
+                            <select class="form-control" id="categoryId" asp-for="Filter.CategoryId">
+                                <option value="">All Categories</option>
+                                @if (Model?.Categories != null)
                                 {
-                                    <img src="@item.ImageUrl" alt="@item.Name" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">
-                                }
-                                else
-                                {
-                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" style="width: 50px; height: 50px;">
-                                        <i class="fas fa-image text-muted"></i>
-                                    </div>
-                                }
-                            </td>
-                            <td>
-                                <strong class="text-dark">@item.Name</strong>
-                                @if (!string.IsNullOrEmpty(item.Brand))
-                                {
-                                    <br><small class="text-muted">@item.Brand</small>
-                                }
-                                @if (!string.IsNullOrEmpty(item.Flavor))
-                                {
-                                    <br><small class="badge bg-info text-dark">@item.Flavor</small>
-                                }
-                            </td>
-                            <td class="text-dark">@item.Category?.Name</td>
-                            <td class="text-dark">$@item.Price.ToString("F2")</td>
-                            <td class="text-dark">@item.DisplayWeight</td>
-                            <td>
-                                <span class="badge @(item.StockQuantity <= 0 ? "bg-danger" : item.StockQuantity <= 10 ? "bg-warning text-dark" : "bg-success")">
-                                    @item.StockQuantity
-                                </span>
-                            </td>
-                            <td>
-                                @if (item.ExpiryDate.HasValue)
-                                {
-                                    <span class="text-dark">@item.ExpiryDate.Value.ToString("dd/MM/yyyy")</span>
-                                    @if (item.IsExpired)
+                                    @foreach (var category in Model.Categories)
                                     {
-                                        <br><small class="text-danger">Expired</small>
+                                        <option value="@category.Id">@category.Name</option>
                                     }
                                 }
-                                else
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="brand" class="form-label">Brand</label>
+                            <select class="form-control" id="brand" asp-for="Filter.Brand">
+                                <option value="">All Brands</option>
+                                @if (Model?.Brands != null)
                                 {
-                                    <span class="text-muted">N/A</span>
+                                    @foreach (var brand in Model.Brands)
+                                    {
+                                        <option value="@brand">@brand</option>
+                                    }
                                 }
-                            </td>
-                            <td>
-                                @if (item.IsAvailable)
-                                {
-                                    <span class="badge bg-success">Available</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Unavailable</span>
-                                }
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="Display" asp-route-id="@item.Id" class="btn btn-sm btn-info" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a asp-action="Update" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-@(item.IsAvailable ? "secondary" : "success")" 
-                                            onclick="toggleAvailability(@item.Id)" title="Toggle Availability">
-                                        <i class="fas fa-@(item.IsAvailable ? "eye-slash" : "eye")"></i>
-                                    </button>
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="minPrice" class="form-label">Min Price</label>
+                            <input type="number" class="form-control" asp-for="Filter.MinPrice" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="maxPrice" class="form-label">Max Price</label>
+                            <input type="number" class="form-control" asp-for="Filter.MaxPrice" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="minStock" class="form-label">Min Stock</label>
+                            <input type="number" class="form-control" asp-for="Filter.MinStock" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="maxStock" class="form-label">Max Stock</label>
+                            <input type="number" class="form-control" asp-for="Filter.MaxStock" min="0">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="sortBy" class="form-label">Sort By</label>
+                            <select class="form-control" asp-for="Filter.SortBy">
+                                <option value="Name">Name</option>
+                                <option value="Price">Price</option>
+                                <option value="Stock">Stock</option>
+                                <option value="Category">Category</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="sortDirection" class="form-label">Sort Direction</label>
+                            <select class="form-control" asp-for="Filter.SortDirection">
+                                <option value="asc">Ascending</option>
+                                <option value="desc">Descending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status Filters</label>
+                            <div class="d-flex">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="checkbox" asp-for="Filter.IsAvailable">
+                                    <label class="form-check-label" asp-for="Filter.IsAvailable">Available Only</label>
                                 </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="checkbox" asp-for="Filter.IsExpired">
+                                    <label class="form-check-label" asp-for="Filter.IsExpired">Expired Only</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" asp-for="Filter.IsLowStock">
+                                    <label class="form-check-label" asp-for="Filter.IsLowStock">Low Stock Only</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Apply Filter
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i> Reset
+                            </a>
+                            <span class="ml-3 text-muted">
+                                Showing @(Model?.Products?.Count() ?? 0) of @(Model?.TotalItems ?? 0) products
+                            </span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Products List</h6>
+            <div>
+                <span class="badge badge-info">Page @Model.CurrentPage of @Model.TotalPages</span>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (!Model.Products.Any())
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No products found</h5>
+                    <p class="text-muted">Try adjusting your filter criteria.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Weight</th>
+                                <th>Stock</th>
+                                <th>Expiry</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Products)
+                            {
+                                <tr class="@(item.IsExpired ? "table-danger" : item.StockQuantity <= 10 ? "table-warning" : "")">
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.Name" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong class="text-dark">@item.Name</strong>
+                                        @if (!string.IsNullOrEmpty(item.Brand))
+                                        {
+                                            <br><small class="text-muted">@item.Brand</small>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.Flavor))
+                                        {
+                                            <br><span class="badge badge-info">@item.Flavor</span>
+                                        }
+                                    </td>
+                                    <td class="text-dark">@(item.Category?.Name ?? "No Category")</td>
+                                    <td class="text-dark">$@item.Price.ToString("F2")</td>
+                                    <td class="text-dark">@item.DisplayWeight</td>
+                                    <td>
+                                        <span class="badge @(item.StockQuantity <= 0 ? "badge-danger" : item.StockQuantity <= 10 ? "badge-warning" : "badge-success")">
+                                            @item.StockQuantity
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (item.ExpiryDate.HasValue)
+                                        {
+                                            <span class="text-dark">@item.ExpiryDate.Value.ToString("dd/MM/yyyy")</span>
+                                            @if (item.IsExpired)
+                                            {
+                                                <br><small class="text-danger"><i class="fas fa-exclamation-triangle"></i> Expired</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.IsAvailable)
+                                        {
+                                            <span class="badge badge-success"><i class="fas fa-check"></i> Available</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary"><i class="fas fa-times"></i> Unavailable</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Display" asp-route-id="@item.Id" class="btn btn-sm btn-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Update" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-@(item.IsAvailable ? "secondary" : "success")" 
+                                                    onclick="toggleAvailability(@item.Id)" title="Toggle Availability">
+                                                <i class="fas fa-@(item.IsAvailable ? "eye-slash" : "eye")"></i>
+                                            </button>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="Product pagination">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@GetPageUrl(Model.CurrentPage - 1)">Previous</a>
+                                </li>
+                            }
+
+                            @{
+                                var startPage = Math.Max(1, Model.CurrentPage - 2);
+                                var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                            }
+
+                            @for (int i = startPage; i <= endPage; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@GetPageUrl(i)">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@GetPageUrl(Model.CurrentPage + 1)">Next</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
         </div>
     </div>
 </div>
+
+@functions {
+    private string GetPageUrl(int page)
+    {
+        var routeValues = new Dictionary<string, object>
+        {
+            ["page"] = page,
+            ["pageSize"] = Model.PageSize
+        };
+
+        // Add filter parameters
+        if (!string.IsNullOrEmpty(Model.Filter.SearchTerm))
+            routeValues["Filter.SearchTerm"] = Model.Filter.SearchTerm;
+        if (Model.Filter.CategoryId.HasValue)
+            routeValues["Filter.CategoryId"] = Model.Filter.CategoryId.Value;
+        if (!string.IsNullOrEmpty(Model.Filter.Brand))
+            routeValues["Filter.Brand"] = Model.Filter.Brand;
+        if (Model.Filter.MinPrice.HasValue)
+            routeValues["Filter.MinPrice"] = Model.Filter.MinPrice.Value;
+        if (Model.Filter.MaxPrice.HasValue)
+            routeValues["Filter.MaxPrice"] = Model.Filter.MaxPrice.Value;
+        if (Model.Filter.MinStock.HasValue)
+            routeValues["Filter.MinStock"] = Model.Filter.MinStock.Value;
+        if (Model.Filter.MaxStock.HasValue)
+            routeValues["Filter.MaxStock"] = Model.Filter.MaxStock.Value;
+        routeValues["Filter.IsAvailable"] = Model.Filter.IsAvailable;
+        routeValues["Filter.IsExpired"] = Model.Filter.IsExpired;
+        routeValues["Filter.IsLowStock"] = Model.Filter.IsLowStock;
+        if (Model.Filter.ExpiryFromDate.HasValue)
+            routeValues["Filter.ExpiryFromDate"] = Model.Filter.ExpiryFromDate.Value.ToString("yyyy-MM-dd");
+        if (Model.Filter.ExpiryToDate.HasValue)
+            routeValues["Filter.ExpiryToDate"] = Model.Filter.ExpiryToDate.Value.ToString("yyyy-MM-dd");
+        if (!string.IsNullOrEmpty(Model.Filter.SortBy))
+            routeValues["Filter.SortBy"] = Model.Filter.SortBy;
+        if (!string.IsNullOrEmpty(Model.Filter.SortDirection))
+            routeValues["Filter.SortDirection"] = Model.Filter.SortDirection;
+
+        return Url.Action("Index", routeValues);
+    }
+}
 
 @section Scripts {
     <script>
+        function resetFilter() {
+            window.location.href = '@Url.Action("Index")';
+        }
+
         function toggleAvailability(productId) {
             if (confirm('Are you sure you want to toggle this product availability?')) {
-                $.post('@Url.Action("ToggleAvailability")', { id: productId })
-                    .done(function(result) {
-                        if (result.success) {
-                            location.reload();
-                        } else {
-                            alert('Error: ' + result.message);
-                        }
-                    })
-                    .fail(function() {
-                        alert('Error occurred while updating product availability.');
-                    });
+                fetch('@Url.Action("ToggleAvailability")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify({ id: productId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error occurred while updating product availability.');
+                });
             }
         }
 
         $(document).ready(function() {
-            $('#dataTable').DataTable({
-                "pageLength": 25,
-                "order": [[ 1, "asc" ]],
-                "columnDefs": [
-                    { "orderable": false, "targets": [0, 8] }
-                ]
-            });
+            // Quick filter buttons
+            $('.btn-toolbar').append(`
+                <div class="btn-group ml-2" role="group">
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="quickFilter('lowstock')">
+                        <i class="fas fa-exclamation-triangle"></i> Low Stock
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="quickFilter('expired')">
+                        <i class="fas fa-calendar-times"></i> Expired
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="quickFilter('available')">
+                        <i class="fas fa-check-circle"></i> Available
+                    </button>
+                </div>
+            `);
         });
+
+        function quickFilter(type) {
+            const baseUrl = '@Url.Action("Index")';
+            let url = baseUrl;
+            
+            switch(type) {
+                case 'lowstock':
+                    url += '?Filter.IsLowStock=true';
+                    break;
+                case 'expired':
+                    url += '?Filter.IsExpired=true';
+                    break;
+                case 'available':
+                    url += '?Filter.IsAvailable=true';
+                    break;
+            }
+            
+            window.location.href = url;
+        }
     </script>
 }
 
@@ -232,6 +484,9 @@
     .border-left-warning {
         border-left: 0.25rem solid #f6c23e !important;
     }
+    .border-left-danger {
+        border-left: 0.25rem solid #e74a3b !important;
+    }
     .text-xs {
         font-size: 0.7rem;
     }
@@ -239,7 +494,6 @@
         font-size: 0.75em;
     }
     
-    /* Override any white text to black */
     .text-gray-800, .text-white {
         color: #333 !important;
     }
@@ -250,5 +504,19 @@
     
     .table td, .table th {
         color: #333 !important;
+    }
+
+    .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+
+    .pagination .page-link {
+        color: #4e73df;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #4e73df;
+        border-color: #4e73df;
     }
 </style>

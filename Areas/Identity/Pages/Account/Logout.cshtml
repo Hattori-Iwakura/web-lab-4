@@ -1,21 +1,113 @@
 ﻿@page
+@using web_lab_4.Areas.Identity.Pages.Account
 @model LogoutModel
 @{
     ViewData["Title"] = "Log out";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<header>
-    <h1>@ViewData["Title"]</h1>
-    @{
-        if (User.Identity?.IsAuthenticated ?? false)
-        {
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark">Click here to Logout</button>
-            </form>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 text-center">
+                <div class="card-body p-5">
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <!-- User is still logged in -->
+                        <div class="mb-4">
+                            <i class="fas fa-sign-out-alt fa-4x text-primary mb-3"></i>
+                            <h2 class="fw-bold">@ViewData["Title"]</h2>
+                            <p class="text-muted lead">Are you sure you want to sign out of your FitSup account?</p>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You are currently signed in as <strong>@User.Identity.Name</strong>
+                        </div>
+
+                        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Yes, Sign Me Out
+                                </button>
+                                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Cancel, Keep Me Signed In
+                                </a>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- User has successfully logged out -->
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h2 class="fw-bold text-success">Successfully Logged Out</h2>
+                            <p class="text-muted lead">You have been safely signed out of your FitSup account.</p>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Your session has been securely terminated. Thank you for choosing FitSup!
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-primary w-100">
+                                    <i class="fas fa-home me-2"></i>Back to Home
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In Again
+                                </a>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="text-center">
+                            <h5 class="mb-3">Continue Exploring FitSup</h5>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <a asp-area="" asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fas fa-box me-1"></i>Products
+                                    </a>
+                                </div>
+                                <div class="col-md-4">
+                                    <a asp-area="" asp-controller="Home" asp-action="About" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fas fa-info-circle me-1"></i>About Us
+                                    </a>
+                                </div>
+                                <div class="col-md-4">
+                                    <a asp-area="" asp-controller="Home" asp-action="Contact" class="btn btn-outline-secondary btn-sm w-100">
+                                        <i class="fas fa-phone me-1"></i>Contact
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .card {
+            border-radius: 15px;
+            overflow: hidden;
         }
-        else
-        {
-            <p>You have successfully logged out of the application.</p>
+        
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         }
-    }
-</header>
+        
+        .btn-primary:hover,
+        .btn-outline-primary:hover {
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+    </style>
+}

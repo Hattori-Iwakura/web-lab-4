@@ -1,8 +1,539 @@
-﻿@{
+﻿@model IEnumerable<web_lab_4.Models.Product>
+@{
     ViewData["Title"] = "Home Page";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Banner Slideshow -->
+<section class="hero-section">
+    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+        <!-- Carousel Indicators -->
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        </div>
+
+        <!-- Carousel Inner -->
+        <div class="carousel-inner">
+            <!-- Slide 1 -->
+            <div class="carousel-item active">
+                <div class="hero-slide" style="background-image: url('/images/banners/banner.jpg');">
+                    <div class="hero-overlay"></div>
+                    <div class="container">
+                        <div class="row align-items-center min-vh-75">
+                            <div class="col-lg-6">
+                                <div class="hero-content text-white">
+                                    <h1 class="hero-title display-3 fw-bold mb-4">
+                                        Fuel Your <span class="text-primary">Fitness</span> Journey
+                                    </h1>
+                                    <p class="hero-subtitle lead mb-4">
+                                        Premium quality supplements designed to help you achieve your fitness goals. 
+                                        From protein powders to pre-workouts, we've got everything you need.
+                                    </p>
+                                    <div class="hero-buttons">
+                                        <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg me-3">
+                                            <i class="fas fa-shopping-bag me-2"></i>Shop Now
+                                        </a>
+                                        <a asp-controller="Home" asp-action="About" class="btn btn-outline-light btn-lg">
+                                            <i class="fas fa-info-circle me-2"></i>Learn More
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <div class="hero-slide" style="background-image: url('/images/banners/banner2.jpg');">
+                    <div class="hero-overlay"></div>
+                    <div class="container">
+                        <div class="row align-items-center min-vh-75">
+                            <div class="col-lg-6">
+                                <div class="hero-content text-white">
+                                    <h1 class="hero-title display-3 fw-bold mb-4">
+                                        <span class="text-warning">Transform</span> Your Body
+                                    </h1>
+                                    <p class="hero-subtitle lead mb-4">
+                                        Discover our exclusive range of supplements crafted by fitness experts. 
+                                        Get the nutrition your body deserves to reach new heights.
+                                    </p>
+                                    <div class="hero-buttons mt-4">
+                                        <a asp-controller="Product" asp-action="Index" class="btn btn-warning btn-lg me-3">
+                                            <i class="fas fa-dumbbell me-2"></i>Explore Products
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="featured-products py-5">
+    <div class="container">
+        <!-- Section Header -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="section-title display-5 fw-bold mb-3">
+                    <i class="fas fa-star text-warning me-2"></i>Featured Products
+                </h2>
+                <p class="section-subtitle lead text-muted">
+                    Discover our most popular supplements trusted by fitness enthusiasts worldwide
+                </p>
+                <div class="title-divider mx-auto"></div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row g-4">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var product in Model.Take(8))
+                {
+                    <div class="col-lg-3 col-md-6">
+                        <div class="product-card h-100">
+                            <!-- Product Image -->
+                            <div class="product-image-container">
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" alt="@product.Name" class="product-image" />
+                                }
+                                else
+                                {
+                                    <div class="product-image-placeholder">
+                                        <i class="fas fa-dumbbell fa-3x text-muted"></i>
+                                    </div>
+                                }
+                                
+                                <!-- Product Badge -->
+                                @if (product.Price < 30)
+                                {
+                                    <span class="product-badge badge-sale">Best Value</span>
+                                }
+                                else if (product.Price > 80)
+                                {
+                                    <span class="product-badge badge-premium">Premium</span>
+                                }
+                                else
+                                {
+                                    <span class="product-badge badge-popular">Popular</span>
+                                }
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="product-info">
+                                <div class="product-category mb-2">
+                                    <span class="badge bg-secondary">@(product.Category?.Name ?? "General")</span>
+                                </div>
+                                
+                                <h5 class="product-title">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" 
+                                       class="text-decoration-none">
+                                        @product.Name
+                                    </a>
+                                </h5>
+                                
+                                <!-- Product Description -->
+                                <p class="product-description text-muted small">
+                                    @product.Description
+                                </p>
+                                
+                                <!-- Brand -->
+                                @if (!string.IsNullOrEmpty(product.Brand))
+                                {
+                                    <p class="text-muted small mb-1">
+                                        Brand: @product.Brand
+                                    </p>
+                                }
+                                
+                                <!-- Stock Status -->
+                                <div class="mb-2">
+                                    @if (product.StockQuantity > 20)
+                                    {
+                                        <span class="badge bg-success small">In Stock</span>
+                                    }
+                                    else if (product.StockQuantity > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark small">Low Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger small">Out of Stock</span>
+                                    }
+                                </div>
+                                
+                                <!-- Product Rating -->
+                                <div class="product-rating mb-2">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-muted"></i>
+                                    <span class="rating-text text-muted small">(4.2)</span>
+                                </div>
+
+                                <!-- Product Price and Action -->
+                                <div class="product-footer">
+                                    <div class="product-price">
+                                        <span class="current-price">@product.Price.ToString("C")</span>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm add-to-cart-btn" 
+                                            data-product-id="@product.Id">
+                                        <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- No Products Message -->
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Products Available</h4>
+                    <p class="text-muted">We're currently updating our inventory. Please check back soon!</p>
+                </div>
+            }
+        </div>
+
+        <!-- View All Products Button -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-th-large me-2"></i>View All Products
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section bg-light py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-shipping-fast fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold">Free Shipping</h5>
+                    <p class="text-muted">Free delivery on orders over $50.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-award fa-3x text-success"></i>
+                    </div>
+                    <h5 class="fw-bold">Quality Guarantee</h5>
+                    <p class="text-muted">100% authentic products from trusted brands.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-headset fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="fw-bold">24/7 Support</h5>
+                    <p class="text-muted">Expert customer support available around the clock.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-undo fa-3x text-info"></i>
+                    </div>
+                    <h5 class="fw-bold">Easy Returns</h5>
+                    <p class="text-muted">30-day return policy. No questions asked.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.add-to-cart-btn').on('click', function(e) {
+                e.preventDefault();
+                
+                var productId = $(this).data('product-id');
+                var button = $(this);
+                var originalText = button.html();
+                
+                if (!productId) {
+                    alert('Invalid product. Please refresh the page and try again.');
+                    return;
+                }
+                
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Adding...');
+                
+                $.ajax({
+                    url: '/ShoppingCart/AddToCart',
+                    type: 'POST',
+                    data: {
+                        productId: productId,
+                        quantity: 1
+                    },
+                    success: function(response) {
+                        if (response && response.success) {
+                            button.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check me-1"></i>Added!');
+                            
+                            setTimeout(function() {
+                                button.removeClass('btn-success').addClass('btn-primary').prop('disabled', false).html(originalText);
+                            }, 2000);
+                            
+                            if (window.updateCartCount) {
+                                window.updateCartCount();
+                            }
+                        } else {
+                            button.prop('disabled', false).html(originalText);
+                            alert('Error adding product to cart');
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).html(originalText);
+                        alert('Error adding product to cart. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-slide {
+            min-height: 75vh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .min-vh-75 {
+            min-height: 75vh;
+        }
+
+        .featured-products {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .section-title {
+            color: #2c3e50;
+        }
+
+        .title-divider {
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(135deg, #0d6efd 0%, #6c5ce7 100%);
+            margin-top: 1rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .product-image-container {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.1);
+        }
+
+        .product-image-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            z-index: 3;
+        }
+
+        .badge-sale {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .badge-popular {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .badge-premium {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-title {
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .product-title a {
+            color: #2c3e50;
+            transition: color 0.3s ease;
+        }
+
+        .product-title a:hover {
+            color: #0d6efd;
+        }
+
+        .product-description {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .product-price {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .current-price {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .feature-box {
+            padding: 2rem 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .feature-box:hover .feature-icon {
+            transform: scale(1.1);
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .hero-slide {
+                min-height: 60vh;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem !important;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .hero-slide {
+                min-height: 50vh;
+            }
+            
+            .hero-title {
+                font-size: 2rem !important;
+            }
+        }
+    </style>
+}

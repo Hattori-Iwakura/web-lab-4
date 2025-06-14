@@ -15,6 +15,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// XÓA dòng này - gây xung đột
+// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
+
+// CHỈ GIỮ LẠI cấu hình Identity này
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = true;
@@ -45,19 +49,21 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddControllersWithViews();
+// XÓA dòng trùng lặp này
+// builder.Services.AddControllersWithViews();
+
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>(); // Add this line
+builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Keep existing Repository registrations
 builder.Services.AddScoped<IDashboardRepository, EFDashboardRepository>(); 
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
-builder.Services.AddScoped<ISessionManager, SessionManager>(); // Add this line
+builder.Services.AddScoped<ISessionManager, SessionManager>();
 // Add this if you have OrderRepository
 // builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
 builder.Services.AddMemoryCache(); // If not already added
@@ -86,14 +92,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseSession();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// XÓA UseRouting trùng lặp ở cuối
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapRazorPages();
 
@@ -105,7 +112,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.UseRouting();
-
+// XÓA dòng UseRouting trùng lặp này
+// app.UseRouting();
 
 app.Run();

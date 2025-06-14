@@ -3,84 +3,523 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Blue Archive</title>
+    <title>@ViewData["Title"] - FitSup</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
-    @* Add this line to render Styles section *@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-star text-primary"></i> Blue Archive
+    <!-- Header -->
+    <header class="sticky-top">
+        <!-- Top Bar -->
+        <div class="bg-primary text-white py-2">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small>
+                            <i class="fas fa-phone"></i> +1 (555) 123-4567 | 
+                            <i class="fas fa-envelope"></i> support@fitsup.com
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small>
+                            <i class="fas fa-shipping-fast"></i> Free shipping on orders over $50!
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+            <div class="container">
+                <!-- Brand Logo -->
+                <a class="navbar-brand fw-bold text-primary fs-3" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-dumbbell text-primary me-2"></i>FitSup
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+
+                <!-- Mobile Toggle Button -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <!-- Navigation Menu -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Left Menu Items -->
+                    <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
-                                <i class="fas fa-home"></i> Home
+                            <a class="nav-link fw-semibold @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active text-primary" : "")" 
+                               asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>Home
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">
-                                <i class="fas fa-shield-alt"></i> Privacy
+                            <a class="nav-link fw-semibold @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active text-primary" : "")" 
+                               asp-area="" asp-controller="Product" asp-action="Index">
+                                <i class="fas fa-box me-1"></i>Products
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">
-                                <i class="fas fa-box"></i> Products
+                            <a class="nav-link fw-semibold" asp-area="" asp-controller="Home" asp-action="About">
+                                <i class="fas fa-info-circle me-1"></i>About
                             </a>
                         </li>
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Home" asp-action="Index">
-                                    <i class="fas fa-cog"></i> Admin
-                                </a>
-                            </li>
-                        }
                         <li class="nav-item">
-                            @await Html.PartialAsync("_CartIcon")
+                            <a class="nav-link fw-semibold" asp-area="" asp-controller="Home" asp-action="Contact">
+                                <i class="fas fa-phone me-1"></i>Contact
+                            </a>
                         </li>
+                    </ul>
+
+                    <!-- Right Menu Items -->
+                    <ul class="navbar-nav">
+                        <!-- Search Bar (Optional) -->
+                        <li class="nav-item me-3">
+                            <form class="d-flex" asp-area="" asp-controller="Product" asp-action="Index" method="get">
+                                <div class="input-group">
+                                    <input class="form-control form-control-sm" type="search" name="searchTerm" 
+                                           placeholder="Search products..." aria-label="Search" style="width: 200px;">
+                                    <button class="btn btn-outline-primary btn-sm" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </li>
+
+                        <!-- Shopping Cart -->
+                        <li class="nav-item me-3">
+                            <a class="nav-link position-relative" asp-area="" asp-controller="ShoppingCart" asp-action="Index">
+                                <i class="fas fa-shopping-cart fs-5"></i>
+                                <span id="cartCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                    0
+                                </span>
+                            </a>
+                        </li>
+
+                        <!-- User Menu -->
                         @if (User.Identity.IsAuthenticated)
                         {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userDropdown" role="button" 
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            <i class="fas fa-user me-2"></i>My Account
+                                        </h6>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">
+                                            <i class="fas fa-user-edit me-2 text-primary"></i>Profile Settings
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="ShoppingCart" asp-action="OrderHistory">
+                                            <i class="fas fa-history me-2 text-success"></i>My Orders
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="ShoppingCart" asp-action="Index">
+                                            <i class="fas fa-shopping-cart me-2 text-info"></i>Shopping Cart
+                                        </a>
+                                    </li>
+                                    
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <h6 class="dropdown-header">
+                                                <i class="fas fa-crown me-2 text-warning"></i>Administration
+                                            </h6>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-area="Admin" asp-controller="Home" asp-action="Index">
+                                                <i class="fas fa-tachometer-alt me-2 text-warning"></i>Dashboard
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-area="Admin" asp-controller="Product" asp-action="Index">
+                                                <i class="fas fa-box me-2 text-warning"></i>Manage Products
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-area="Admin" asp-controller="Order" asp-action="Index">
+                                                <i class="fas fa-clipboard-list me-2 text-warning"></i>Manage Orders
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-area="Admin" asp-controller="User" asp-action="Index">
+                                                <i class="fas fa-users me-2 text-warning"></i>Manage Users
+                                            </a>
+                                        </li>
+                                    }
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- Guest Menu -->
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="ShoppingCart" asp-action="OrderHistory">
-                                    <i class="fas fa-history"></i> My Orders
+                                <a class="nav-link fw-semibold" asp-area="Identity" asp-page="/Account/Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link fw-semibold" asp-area="Identity" asp-page="/Account/Register">
+                                    <i class="fas fa-user-plus me-1"></i>Register
                                 </a>
                             </li>
                         }
                     </ul>
-                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Blue Archive - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light mt-5">
+        <!-- Main Footer Content -->
+        <div class="container py-5">
+            <div class="row">
+                <!-- Company Info -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-dumbbell text-primary me-2"></i>FitSup
+                    </h5>
+                    <p class="text-light-muted">
+                        Your premium fitness supplement store. We provide quality nutrition products with exceptional service and fast delivery to fuel your fitness journey.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-light fs-4 footer-social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-light fs-4 footer-social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-light fs-4 footer-social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-light fs-4 footer-social-link"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3 text-white">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="@Url.Action("Index", "Home")" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Home
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="@Url.Action("Index", "Product")" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Products
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="@Url.Action("About", "Home")" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>About Us
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="@Url.Action("Contact", "Home")" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Contact
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Customer Service -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3 text-white">Customer Service</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="#" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Help Center
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Shipping Info
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Returns & Exchanges
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="@Url.Action("Privacy", "Home")" class="footer-link">
+                                <i class="fas fa-angle-right me-1"></i>Privacy Policy
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3 text-white">Contact Info</h6>
+                    <div class="footer-contact">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                            <span>123 Fitness St, City, State 12345</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-phone me-2 text-primary"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            <span>support@fitsup.com</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock me-2 text-primary"></i>
+                            <span>Mon - Fri: 9AM - 6PM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Footer -->
+        <div class="border-top border-secondary">
+            <div class="container py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-0 footer-copyright">
+                            &copy; 2025 FitSup. All rights reserved.
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-flex justify-content-end align-items-center gap-3">
+                            <span class="footer-payment-text">We Accept:</span>
+                            <i class="fab fa-cc-visa fs-4 text-primary"></i>
+                            <i class="fab fa-cc-mastercard fs-4 text-warning"></i>
+                            <i class="fab fa-cc-paypal fs-4 text-info"></i>
+                            <i class="fab fa-cc-apple-pay fs-4 text-light"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
-    
+
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Cart Count Update Script -->
+    <script>
+        // Enhanced cart count management
+        (function() {
+            let cartUpdateInProgress = false;
+            
+            function updateCartCount(showLoading = false) {
+                if (cartUpdateInProgress) return;
+                
+                cartUpdateInProgress = true;
+                
+                if (showLoading) {
+                    $('#cartCount').html('<i class="fas fa-spinner fa-spin"></i>');
+                }
+                
+                $.ajax({
+                    url: '@Url.Action("GetCartCount", "ShoppingCart")',
+                    type: 'GET',
+                    timeout: 5000,
+                    success: function(data) {
+                        const count = data.count || 0;
+                        $('#cartCount').text(count);
+                        
+                        if (count > 0) {
+                            $('#cartCount').show().removeClass('d-none');
+                        } else {
+                            $('#cartCount').hide().addClass('d-none');
+                        }
+                        
+                        // Store in localStorage for backup
+                        localStorage.setItem('cartCount', count);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Cart count update failed:', error);
+                        
+                        // Try to get from localStorage as fallback
+                        const backupCount = localStorage.getItem('cartCount') || 0;
+                        $('#cartCount').text(backupCount);
+                        
+                        if (backupCount > 0) {
+                            $('#cartCount').show().removeClass('d-none');
+                        } else {
+                            $('#cartCount').hide().addClass('d-none');
+                        }
+                    },
+                    complete: function() {
+                        cartUpdateInProgress = false;
+                    }
+                });
+            }
+            
+            // Update on page load
+            $(document).ready(function() {
+                updateCartCount();
+            });
+            
+            // Update when page becomes visible again
+            $(window).on('focus pageshow', function() {
+                updateCartCount();
+            });
+            
+            // Update when storage changes (multiple tabs)
+            $(window).on('storage', function(e) {
+                if (e.originalEvent.key === 'cartCount') {
+                    const count = e.originalEvent.newValue || 0;
+                    $('#cartCount').text(count);
+                    
+                    if (count > 0) {
+                        $('#cartCount').show().removeClass('d-none');
+                    } else {
+                        $('#cartCount').hide().addClass('d-none');
+                    }
+                }
+            });
+            
+            // Make globally available
+            window.updateCartCount = updateCartCount;
+        })();
+
+        // Smooth scroll for anchor links
+        $('a[href^="#"]').on('click', function(event) {
+            var target = $(this.getAttribute('href'));
+            if( target.length ) {
+                event.preventDefault();
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 500);
+            }
+        });
+
+        // Add active class to current page navigation
+        $(document).ready(function() {
+            $('.navbar-nav .nav-link').each(function() {
+                if (this.href === window.location.href) {
+                    $(this).addClass('active text-primary');
+                }
+            });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Custom Styles -->
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+        }
+
+        .nav-link:hover {
+            color: #0d6efd !important;
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-menu {
+            border: none;
+            border-radius: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-item {
+            padding: 0.7rem 1rem;
+            border-radius: 5px;
+            margin: 0.1rem 0.5rem;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-header {
+            font-weight: 600;
+            color: #6c757d;
+            padding: 0.5rem 1rem;
+        }
+
+        footer a:hover {
+            color: #0d6efd !important;
+            transition: color 0.2s ease;
+        }
+
+        #cartCount {
+            font-size: 0.75rem;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobile Responsiveness */
+        @@media (max-width: 991.98px) {
+            .navbar-nav .nav-item {
+                text-align: center;
+                padding: 0.2rem 0;
+            }
+            
+            .dropdown-menu {
+                position: static !important;
+                transform: none !important;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+        /* Scroll to top animation */
+        .navbar {
+            transition: all 0.3s ease;
+        }
+
+        /* Search bar styling */
+        .input-group .form-control:focus {
+            box-shadow: none;
+            border-color: #0d6efd;
+        }
+
+        .input-group .btn:focus {
+            box-shadow: none;
+        }
+
+        
+    </style>
 </body>
 </html>

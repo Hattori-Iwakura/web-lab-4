@@ -1,0 +1,252 @@
+﻿@page
+@using web_lab_4.Areas.Identity.Pages.Account.Manage
+@model web_lab_4.Areas.Identity.Pages.Account.Manage.IndexModel
+@{
+    ViewData["Title"] = "Profile Settings";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-4">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user-cog me-2"></i>Account Management
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <partial name="_ManageNav" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit text-primary me-2"></i>@ViewData["Title"]
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Message -->
+                    <partial name="_StatusMessage" for="StatusMessage" />
+
+                    <!-- User Info Display -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Welcome to FitSup!</strong> Manage your account settings and personal information below.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <form id="profile-form" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger alert alert-danger" role="alert"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Username (Read-only) -->
+                                <div class="form-group mb-3">
+                                    <label asp-for="Username" class="form-label fw-bold">
+                                        <i class="fas fa-user me-1"></i>Username/Email
+                                    </label>
+                                    <input asp-for="Username" class="form-control" placeholder="Your username" disabled />
+                                    <div class="form-text">This is your login email and cannot be changed.</div>
+                                </div>
+
+                                <!-- Phone Number -->
+                                <div class="form-group mb-3">
+                                    <label asp-for="Input.PhoneNumber" class="form-label fw-bold">
+                                        <i class="fas fa-phone me-1"></i>Phone Number
+                                    </label>
+                                    <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Enter your phone number" />
+                                    <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                                    <div class="form-text">We'll use this for order notifications and account security.</div>
+                                </div>
+
+                                <!-- Account Info Display -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-calendar-alt me-1"></i>Account Information
+                                    </label>
+                                    <div class="card bg-light">
+                                        <div class="card-body py-2">
+                                            <small class="text-muted">
+                                                <div><strong>Account Type:</strong> Customer</div>
+                                                <div><strong>Member Since:</strong> @DateTime.Now.ToString("MMMM yyyy")</div>
+                                                <div><strong>Status:</strong> <span class="badge bg-success">Active</span></div>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Quick Actions -->
+                                <div class="card bg-light">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-rocket me-2"></i>Quick Actions
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <a asp-area="" asp-controller="ShoppingCart" asp-action="OrderHistory" class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-history me-2"></i>View Order History
+                                            </a>
+                                            <a asp-area="" asp-controller="ShoppingCart" asp-action="Index" class="btn btn-outline-info btn-sm">
+                                                <i class="fas fa-shopping-cart me-2"></i>View Shopping Cart
+                                            </a>
+                                            <a asp-page="./ChangePassword" class="btn btn-outline-warning btn-sm">
+                                                <i class="fas fa-key me-2"></i>Change Password
+                                            </a>
+                                            <a asp-area="" asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Security Features -->
+                                <div class="card bg-light mt-3">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-shield-alt me-2"></i>Security Features
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group list-group-flush">
+                                            <div class="list-group-item bg-transparent border-0 px-0 py-1">
+                                                <small>
+                                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                                    Email verification: <strong>Active</strong>
+                                                </small>
+                                            </div>
+                                            <div class="list-group-item bg-transparent border-0 px-0 py-1">
+                                                <small>
+                                                    <i class="fas fa-lock text-primary me-1"></i>
+                                                    Password protection: <strong>Enabled</strong>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Home
+                                    </a>
+                                    <button id="update-profile-button" type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save me-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        $(document).ready(function() {
+            // Auto-focus on phone number field if empty
+            if (!$('#Input_PhoneNumber').val()) {
+                $('#Input_PhoneNumber').focus();
+            }
+
+            // Form submission with loading state
+            $('#profile-form').on('submit', function() {
+                const submitBtn = $('#update-profile-button');
+                const originalText = submitBtn.html();
+                
+                submitBtn.prop('disabled', true)
+                         .html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+                
+                // Reset button after form processes
+                setTimeout(function() {
+                    submitBtn.prop('disabled', false).html(originalText);
+                }, 3000);
+            });
+
+            // Phone number formatting
+            $('#Input_PhoneNumber').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length >= 6) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+                } else if (value.length >= 3) {
+                    value = value.replace(/(\d{3})(\d{3})/, '($1) $2');
+                }
+                $(this).val(value);
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .nav-pills .nav-link {
+            color: #6c757d;
+            border-radius: 0;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+        }
+
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .nav-pills .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .btn-outline-success:hover,
+        .btn-outline-info:hover,
+        .btn-outline-warning:hover,
+        .btn-outline-primary:hover {
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        .list-group-item {
+            font-size: 0.9rem;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0d6efd;
+        }
+    </style>
+}

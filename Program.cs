@@ -7,8 +7,11 @@ using web_lab_4.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+// Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
     options.SignIn.RequireConfirmedAccount = false;
@@ -44,14 +47,17 @@ builder.Services.AddControllersWithViews();
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>(); // Add this line
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Keep existing Repository registrations
+builder.Services.AddScoped<IDashboardRepository, EFDashboardRepository>(); 
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
 // Add this if you have OrderRepository
 // builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
+builder.Services.AddMemoryCache(); // If not already added
 
 var app = builder.Build();
 

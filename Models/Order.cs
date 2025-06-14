@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
 namespace web_lab_4.Models
 {
@@ -25,9 +26,13 @@ namespace web_lab_4.Models
         public string? Notes { get; set; }
         
         [StringLength(50)]
-        public string Status { get; set; } = "Pending"; // Add this property
+        public string Status { get; set; } = "Pending";
         
         // Navigation properties
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+        
+        // Optional: Add User navigation property
+        [ForeignKey("UserId")]
+        public IdentityUser? User { get; set; }
     }
 }

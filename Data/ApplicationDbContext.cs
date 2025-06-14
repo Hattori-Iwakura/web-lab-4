@@ -80,6 +80,13 @@ namespace web_lab_4.Data
                 entity.Property(od => od.WeightUnit)
                     .HasDefaultValue("g");
             });
+
+            // Configure Order-User relationship
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany()
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

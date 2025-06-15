@@ -42,8 +42,8 @@ namespace web_lab_4.Areas.Admin.Controllers
                 {
                     orders = orders.Where(o => 
                         o.Id.ToString().Contains(searchTerm) ||
-                        o.ShippingAddress.Contains(searchTerm) ||
-                        o.UserId.Contains(searchTerm));
+                        (!string.IsNullOrEmpty(o.ShippingAddress) && o.ShippingAddress.Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(o.UserId) && o.UserId.Contains(searchTerm)));
                 }
 
                 var ordersList = orders.OrderByDescending(o => o.OrderDate).ToList();
@@ -51,7 +51,7 @@ namespace web_lab_4.Areas.Admin.Controllers
                 // Statistics for dashboard
                 ViewBag.TotalOrders = await _orderService.GetTotalOrdersCountAsync();
                 ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
-                ViewBag.CompletedOrders = orders.Count(o => o.Status == "Completed");
+                ViewBag.CompletedOrders = orders.Count(o => o.Status == "Delivered"); // Changed from "Completed" to "Delivered"
                 ViewBag.TotalRevenue = await _orderService.GetTotalRevenueAsync();
                 
                 ViewBag.CurrentStatus = status;
@@ -64,6 +64,7 @@ namespace web_lab_4.Areas.Admin.Controllers
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Error loading orders: " + ex.Message;
+                Console.WriteLine($"OrderController.Index Error: {ex}");
                 return View(new List<web_lab_4.Models.Order>());
             }
         }
@@ -74,51 +75,62 @@ namespace web_lab_4.Areas.Admin.Controllers
             try
             {
                 var order = await _orderService.GetOrderWithDetailsAsync(id);
-                if (order == null) return NotFound();
+                if (order == null) 
+                {
+                    TempData["ErrorMessage"] = $"Order #{id} not found";
+                    return RedirectToAction(nameof(Index));
+                }
 
                 return View(order);
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Error loading order details: " + ex.Message;
+                Console.WriteLine($"OrderController.Details Error: {ex}");
                 return RedirectToAction(nameof(Index));
             }
         }
 
         // Update order status
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, string status)
         {
             try
             {
                 await _orderService.UpdateOrderStatusAsync(id, status);
-                TempData["SuccessMessage"] = $"Order #{id} status updated to {status}";
+                TempData["SuccessMessage"] = $"Order #{id} status updated to {status}. Email notification sent to customer.";
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Error updating order status: " + ex.Message;
+                Console.WriteLine($"OrderController.UpdateStatus Error: {ex}");
             }
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Delete order
+        // Delete/Cancel order
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 var order = await _orderService.GetOrderWithDetailsAsync(id);
-                if (order == null) return NotFound();
+                if (order == null) 
+                {
+                    TempData["ErrorMessage"] = $"Order #{id} not found";
+                    return RedirectToAction(nameof(Index));
+                }
 
-                // Note: You might want to add a DeleteOrderAsync method to OrderService
-                // For now, we'll just update status to "Cancelled"
                 await _orderService.UpdateOrderStatusAsync(id, "Cancelled");
                 
-                TempData["SuccessMessage"] = $"Order #{id} has been cancelled";
+                TempData["SuccessMessage"] = $"Order #{id} has been cancelled successfully";
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Error cancelling order: " + ex.Message;
+                Console.WriteLine($"OrderController.Delete Error: {ex}");
             }
             return RedirectToAction(nameof(Index));
         }

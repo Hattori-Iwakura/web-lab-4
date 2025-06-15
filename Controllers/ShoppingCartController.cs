@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using web_lab_4.Data;
-using web_lab_4.Models; // Add this line
-
+using web_lab_4.Models;
+using web_lab_4.Services;
 
 namespace web_lab_4.Controllers
 {
@@ -12,12 +12,17 @@ namespace web_lab_4.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IShoppingCartService _shoppingCartService;
         private const string CART_KEY = "Cart";
 
-        public ShoppingCartController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public ShoppingCartController(
+            ApplicationDbContext context, 
+            UserManager<IdentityUser> userManager,
+            IShoppingCartService shoppingCartService)
         {
             _context = context;
             _userManager = userManager;
+            _shoppingCartService = shoppingCartService;
         }
 
         // Display shopping cart
@@ -147,7 +152,7 @@ namespace web_lab_4.Controllers
             return View(order);
         }
 
-        // Process checkout
+        // Process checkout with email functionality
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -170,51 +175,26 @@ namespace web_lab_4.Controllers
                     return RedirectToAction("Login", "Account", new { area = "Identity" });
                 }
 
-                // Set UserId and clear its validation error
-                order.UserId = user.Id;
-                ModelState.Remove("UserId"); // Clear validation error for UserId
-                
-                // Set other properties that aren't from the form
-                order.OrderDate = DateTime.UtcNow;
-                order.Status = "Pending";
-                order.TotalPrice = cart.Items.Sum(i => i.Price * i.Quantity);
-
-                // Debug: Log what we're receiving
-                System.Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
-                System.Console.WriteLine($"ShippingAddress: '{order.ShippingAddress}'");
-                System.Console.WriteLine($"UserId: '{order.UserId}'");
+                // Clear validation errors for auto-set fields
+                ModelState.Remove("UserId");
+                ModelState.Remove("OrderDate");
+                ModelState.Remove("Status");
+                ModelState.Remove("TotalPrice");
 
                 if (ModelState.IsValid)
                 {
-                    // Create order details
-                    var orderDetails = new List<OrderDetail>();
-                    foreach (var item in cart.Items)
-                    {
-                        orderDetails.Add(new OrderDetail
-                        {
-                            ProductId = item.ProductId,
-                            Quantity = item.Quantity,
-                            Price = item.Price
-                        });
-                    }
-                    order.OrderDetails = orderDetails;
+                    // Use ShoppingCartService to process checkout with email
+                    var processedOrder = await _shoppingCartService.ProcessCheckoutAsync(HttpContext, order, user);
 
-                    // Save order to database
-                    _context.Orders.Add(order);
-                    await _context.SaveChangesAsync();
-
-                    // Clear cart after successful order
-                    HttpContext.Session.Remove(CART_KEY);
-
-                    TempData["SuccessMessage"] = "Your order has been placed successfully!";
-                    return View("OrderCompleted", order);
+                    TempData["SuccessMessage"] = "Your order has been placed successfully! A confirmation email has been sent.";
+                    return View("OrderCompleted", processedOrder);
                 }
                 else
                 {
                     // Debug: Show validation errors
                     foreach (var modelError in ModelState.Values.SelectMany(v => v.Errors))
                     {
-                        System.Console.WriteLine($"Validation Error: {modelError.ErrorMessage}");
+                        Console.WriteLine($"Validation Error: {modelError.ErrorMessage}");
                     }
                     
                     TempData["ErrorMessage"] = "Please correct the errors below.";
@@ -222,7 +202,7 @@ namespace web_lab_4.Controllers
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"Checkout Error: {ex.Message}");
+                Console.WriteLine($"Checkout Error: {ex.Message}");
                 TempData["ErrorMessage"] = "An error occurred while processing your order. Please try again.";
             }
 
@@ -230,6 +210,7 @@ namespace web_lab_4.Controllers
             ViewBag.Cart = HttpContext.Session.GetObjectFromJson<ShoppingCart>(CART_KEY);
             return View(order);
         }
+
         // Order completion confirmation page
         [Authorize]
         public async Task<IActionResult> OrderCompleted(int id)

@@ -11,16 +11,19 @@ namespace web_lab_4.Services
         private readonly ApplicationDbContext _context;
         private readonly IProductRepository _productRepository;
         private readonly IProductService _productService;
+        private readonly IEmailService _emailService;
         private const string CART_KEY = "Cart";
 
         public ShoppingCartService(
             ApplicationDbContext context, 
             IProductRepository productRepository,
-            IProductService productService)
+            IProductService productService,
+            IEmailService emailService)
         {
             _context = context;
             _productRepository = productRepository;
             _productService = productService;
+            _emailService = emailService;
         }
 
         public ShoppingCart GetCart(HttpContext httpContext)
@@ -143,6 +146,20 @@ namespace web_lab_4.Services
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // Send order confirmation email
+                try
+                {
+                    await _emailService.SendOrderConfirmationEmailAsync(
+                        user.Email, 
+                        user.UserName ?? "Customer", 
+                        order);
+                }
+                catch (Exception ex)
+                {
+                    // Log email error but don't fail the order
+                    Console.WriteLine($"Failed to send confirmation email: {ex.Message}");
+                }
 
                 ClearCart(httpContext);
                 return order;

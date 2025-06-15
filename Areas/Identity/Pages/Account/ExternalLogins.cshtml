@@ -1,0 +1,95 @@
+﻿@page
+@using web_lab_4.Areas.Identity.Pages.Account
+@model ExternalLoginModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Complete Your Registration
+                    </h4>
+                    <p class="mb-0 mt-2">You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong></p>
+                </div>
+                
+                <div class="card-body p-5">
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @Model.ErrorMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <div class="text-center mb-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Please check your email address to complete the registration process.
+                        </div>
+                    </div>
+
+                    <form id="external-account" asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="Input.Email" class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-1 text-primary"></i>Email Address
+                            </label>
+                            <input asp-for="Input.Email" class="form-control form-control-lg" readonly />
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                            <div class="form-text">
+                                This email address was retrieved from your @Model.ProviderDisplayName account.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Complete Registration
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+@section Styles {
+    <style>
+        .card {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0056d3 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+        }
+    </style>
+}

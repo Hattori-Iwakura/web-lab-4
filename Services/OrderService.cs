@@ -1,16 +1,33 @@
 using web_lab_4.Models;
 using web_lab_4.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace web_lab_4.Services
 {
     public class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService? _emailService;
+        private readonly UserManager<IdentityUser>? _userManager;
 
+        // Primary constructor with all dependencies
+        public OrderService(
+            ApplicationDbContext context, 
+            IEmailService emailService,
+            UserManager<IdentityUser> userManager)
+        {
+            _context = context;
+            _emailService = emailService;
+            _userManager = userManager;
+        }
+
+        // Backward compatibility constructor - TẠM THỜI
         public OrderService(ApplicationDbContext context)
         {
             _context = context;
+            _emailService = null;
+            _userManager = null;
         }
 
         public async Task<Order> GetOrderByIdAsync(int id)
@@ -47,7 +64,10 @@ namespace web_lab_4.Services
 
         public async Task UpdateOrderStatusAsync(int orderId, string status)
         {
-            var order = await _context.Orders.FindAsync(orderId);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+                
             if (order == null)
                 throw new ArgumentException($"Order with ID {orderId} not found");
 
@@ -56,8 +76,30 @@ namespace web_lab_4.Services
             if (!validStatuses.Contains(status))
                 throw new ArgumentException("Invalid order status");
 
+            var oldStatus = order.Status;
             order.Status = status;
             await _context.SaveChangesAsync();
+
+            // Send status update email - CHỈ KHI CÓ EMAIL SERVICE
+            if (_emailService != null && _userManager != null)
+            {
+                try
+                {
+                    var user = await _userManager.FindByIdAsync(order.UserId);
+                    if (user != null && !string.IsNullOrEmpty(user.Email))
+                    {
+                        await _emailService.SendOrderStatusUpdateEmailAsync(
+                            user.Email,
+                            user.UserName ?? "Customer",
+                            order,
+                            oldStatus);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send status update email: {ex.Message}");
+                }
+            }
         }
 
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()

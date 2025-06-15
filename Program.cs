@@ -6,6 +6,7 @@ using web_lab_4.Data;
 using web_lab_4.Services;
 using web_lab_4.Core.Interface;
 using web_lab_4.Core.Manager;
+using Microsoft.AspNetCore.Http.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,11 +16,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-
-// XÓA dòng này - gây xung đột
-// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
-
-// CHỈ GIỮ LẠI cấu hình Identity này
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
     options.Lockout.AllowedForNewUsers = true;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
@@ -34,6 +30,95 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
 .AddDefaultTokenProviders()
 .AddDefaultUI()
 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// SỬA LẠI CÁCH ĐỌC CONFIGURATION - DÙNG ĐÚNG KEY TỪ APPSETTINGS.JSON
+builder.Services.AddAuthentication()
+    .AddGoogle(googleOptions =>
+    {
+        var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        
+        if (string.IsNullOrEmpty(googleClientId))
+        {
+            throw new InvalidOperationException("Google ClientId is not configured in appsettings.json");
+        }
+        
+        if (string.IsNullOrEmpty(googleClientSecret))
+        {
+            throw new InvalidOperationException("Google ClientSecret is not configured in appsettings.json");
+        }
+        
+        googleOptions.ClientId = googleClientId;
+        googleOptions.ClientSecret = googleClientSecret;
+        
+        // Use the default callback path that matches ASP.NET Core Identity
+        googleOptions.CallbackPath = "/signin-google";
+        
+        // Add required scopes
+        googleOptions.Scope.Clear();
+        googleOptions.Scope.Add("openid");
+        googleOptions.Scope.Add("profile");
+        googleOptions.Scope.Add("email");
+        
+        googleOptions.SaveTokens = true;
+        
+        // Enhanced error handling
+        googleOptions.Events.OnRemoteFailure = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError($"Google authentication failed: {context.Failure?.Message}");
+            logger.LogError($"Request URL: {context.Request.GetDisplayUrl()}");
+            
+            // Redirect to login with error message
+            context.Response.Redirect("/Identity/Account/Login?error=external_login_failed");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
+        
+        googleOptions.Events.OnAccessDenied = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning($"Google authentication access denied: {context.AccessDeniedPath}");
+            
+            context.Response.Redirect("/Identity/Account/Login?error=access_denied");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
+    })
+    .AddFacebook(facebookOptions =>
+    {
+        var facebookAppId = builder.Configuration["Authentication:Facebook:AppId"];
+        var facebookAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+        
+        if (string.IsNullOrEmpty(facebookAppId))
+        {
+            throw new InvalidOperationException("Facebook AppId is not configured in appsettings.json");
+        }
+        
+        if (string.IsNullOrEmpty(facebookAppSecret))
+        {
+            throw new InvalidOperationException("Facebook AppSecret is not configured in appsettings.json");
+        }
+        
+        facebookOptions.AppId = facebookAppId;
+        facebookOptions.AppSecret = facebookAppSecret;
+        facebookOptions.CallbackPath = "/signin-facebook";
+        
+        facebookOptions.Events.OnRemoteFailure = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError($"Facebook authentication failed: {context.Failure?.Message}");
+            
+            context.Response.Redirect("/Identity/Account/Login?error=external");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
+        
+        facebookOptions.Scope.Add("email");
+        facebookOptions.Scope.Add("public_profile");
+        facebookOptions.Fields.Add("picture");
+        facebookOptions.SaveTokens = true;
+    });
 
 // Configure authorization policies
 builder.Services.AddAuthorization(options =>
@@ -53,9 +138,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// XÓA dòng trùng lặp này
-// builder.Services.AddControllersWithViews();
-
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -68,13 +150,12 @@ builder.Services.AddScoped<IDashboardRepository, EFDashboardRepository>();
 builder.Services.AddScoped<IProductRepository, EFProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, EFCategoryRepository>();
 builder.Services.AddScoped<ISessionManager, SessionManager>();
-// Add this if you have OrderRepository
-// builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
-builder.Services.AddMemoryCache(); // If not already added
+builder.Services.AddMemoryCache();
 
 // Register Review services
 builder.Services.AddScoped<IReviewRepository, EFReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
@@ -94,7 +175,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -102,8 +187,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
-// XÓA UseRouting trùng lặp ở cuối
 app.UseRouting();
 
 app.UseSession();
@@ -119,8 +202,5 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// XÓA dòng UseRouting trùng lặp này
-// app.UseRouting();
 
 app.Run();

@@ -317,7 +317,7 @@
 
         function resetPassword(userId, userName) {
             if (confirm(`Reset password for "${userName}"? A new temporary password will be generated.`)) {
-                performAction('@Url.Action("ResetPassword")', { id: userId });
+                performAction('@Url.Action("ResetPassword")', { id: userId }, false, true);
             }
         }
 
@@ -329,7 +329,10 @@
             }
         }
 
-        function performAction(url, data, redirectToIndex = false) {
+        function performAction(url, data, redirectToIndex = false, showPassword = false) {
+            // Show loading indicator
+            const loadingToast = showToast('Processing...', 'info');
+
             $.ajax({
                 url: url,
                 type: 'POST',
@@ -337,18 +340,113 @@
                     ...data,
                     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                 },
-                success: function() {
-                    if (redirectToIndex) {
-                        window.location.href = '@Url.Action("Index")';
+                success: function(response) {
+                    // Hide loading indicator
+                    hideToast(loadingToast);
+
+                    if (response.success) {
+                        // Show success message
+                        if (response.message) {
+                            if (showPassword && response.newPassword) {
+                                alert(`${response.message}\n\nNew Password: ${response.newPassword}\n\nPlease save this password and share it with the user securely.`);
+                            } else {
+                                showToast(response.message, 'success');
+                            }
+                        }
+
+                        // Handle redirect or reload
+                        if (response.redirect || redirectToIndex) {
+                            setTimeout(() => {
+                                window.location.href = '@Url.Action("Index")';
+                            }, 1500);
+                        } else {
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
+                        }
                     } else {
-                        location.reload();
+                        // Show error message
+                        showToast(response.message || 'An error occurred while performing the action.', 'error');
                     }
                 },
-                error: function() {
-                    alert('Error performing action. Please try again.');
+                error: function(xhr, status, error) {
+                    // Hide loading indicator
+                    hideToast(loadingToast);
+                    
+                    console.error('AJAX Error:', error);
+                    console.error('Response:', xhr.responseText);
+                    
+                    let errorMessage = 'Error performing action. Please try again.';
+                    
+                    // Try to parse error response
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        if (errorResponse.message) {
+                            errorMessage = errorResponse.message;
+                        }
+                    } catch (e) {
+                        // Use default error message
+                    }
+                    
+                    showToast(errorMessage, 'error');
                 }
             });
         }
+
+        // Toast notification functions
+        function showToast(message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const toastClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${toastClass} border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(toastHtml);
+            
+            const toastElement = new bootstrap.Toast(document.getElementById(toastId));
+            toastElement.show();
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                hideToast(toastId);
+            }, 5000);
+            
+            return toastId;
+        }
+
+        function hideToast(toastId) {
+            const toastElement = document.getElementById(toastId);
+            if (toastElement) {
+                const toast = bootstrap.Toast.getInstance(toastElement);
+                if (toast) {
+                    toast.hide();
+                }
+                setTimeout(() => {
+                    $(toastElement).remove();
+                }, 500);
+            }
+        }
+
+        // Add some visual feedback for buttons
+        $(document).ready(function() {
+            $('.btn').on('click', function() {
+                const $btn = $(this);
+                if (!$btn.hasClass('processing')) {
+                    $btn.addClass('processing');
+                    setTimeout(() => {
+                        $btn.removeClass('processing');
+                    }, 3000);
+                }
+            });
+        });
     </script>
 }
 
@@ -391,6 +489,15 @@
         
         .border-end {
             border-right: 1px solid #dee2e6 !important;
+        }
+
+        .btn.processing {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .toast {
+            min-width: 300px;
         }
     </style>
 }

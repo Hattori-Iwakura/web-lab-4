@@ -39,17 +39,17 @@ namespace web_lab_4.Areas.Admin.Controllers
             // Apply status filter
             if (!string.IsNullOrEmpty(statusFilter))
             {
-                if (statusFilter == "active")
+                switch (statusFilter)
                 {
-                    users = users.Where(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.Now);
-                }
-                else if (statusFilter == "locked")
-                {
-                    users = users.Where(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.Now);
-                }
-                else if (statusFilter == "unconfirmed")
-                {
-                    users = users.Where(u => !u.EmailConfirmed);
+                    case "active":
+                        users = users.Where(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.Now);
+                        break;
+                    case "locked":
+                        users = users.Where(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.Now);
+                        break;
+                    case "unconfirmed":
+                        users = users.Where(u => !u.EmailConfirmed);
+                        break;
                 }
             }
 
@@ -60,6 +60,13 @@ namespace web_lab_4.Areas.Admin.Controllers
             foreach (var user in userList)
             {
                 var roles = await _userManager.GetRolesAsync(user);
+                
+                // Apply role filter after getting roles
+                if (!string.IsNullOrEmpty(roleFilter) && !roles.Contains(roleFilter))
+                {
+                    continue;
+                }
+
                 var orderCount = await _context.Orders.CountAsync(o => o.UserId == user.Id);
                 var totalSpent = await _context.Orders
                     .Where(o => o.UserId == user.Id)
@@ -74,7 +81,7 @@ namespace web_lab_4.Areas.Admin.Controllers
                     PhoneNumber = user.PhoneNumber,
                     LockoutEnd = user.LockoutEnd,
                     AccessFailedCount = user.AccessFailedCount,
-                    CreatedDate = user.LockoutEnd ?? DateTimeOffset.Now, // Placeholder
+                    CreatedDate = DateTimeOffset.Now, // TODO: Add actual creation date tracking
                     Roles = roles.ToList(),
                     OrderCount = orderCount,
                     TotalSpent = totalSpent,
@@ -102,31 +109,59 @@ namespace web_lab_4.Areas.Admin.Controllers
         {
             if (string.IsNullOrEmpty(id))
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "User ID is required.";
+                return RedirectToAction(nameof(Index));
             }
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction(nameof(Index));
             }
 
             var roles = await _userManager.GetRolesAsync(user);
             var claims = await _userManager.GetClaimsAsync(user);
             var logins = await _userManager.GetLoginsAsync(user);
 
-            // Get user orders
-            var orders = await _context.Orders
-                .Where(o => o.UserId == id)
-                .OrderByDescending(o => o.OrderDate)
-                .Take(10)
-                .Select(o => new {
-                    o.Id,
-                    o.OrderDate,
-                    o.TotalPrice,
-                    o.Status
-                })
-                .ToListAsync();
+            // Get user orders with error handling
+            var orders = new List<dynamic>();
+            try
+            {
+                orders = await _context.Orders
+                    .Where(o => o.UserId == id)
+                    .OrderByDescending(o => o.OrderDate)
+                    .Take(10)
+                    .Select(o => new {
+                        o.Id,
+                        o.OrderDate,
+                        o.TotalPrice,
+                        o.Status
+                    })
+                    .ToListAsync<dynamic>();
+            }
+            catch (Exception)
+            {
+                // Handle case where Orders table might not exist or have different structure
+                orders = new List<dynamic>();
+            }
+
+            var totalOrders = 0;
+            var totalSpent = 0m;
+            
+            try
+            {
+                totalOrders = await _context.Orders.CountAsync(o => o.UserId == id);
+                totalSpent = await _context.Orders
+                    .Where(o => o.UserId == id)
+                    .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+            }
+            catch (Exception)
+            {
+                // Handle case where Orders table might not exist
+                totalOrders = 0;
+                totalSpent = 0m;
+            }
 
             var userDetails = new UserDetailsViewModel
             {
@@ -144,8 +179,8 @@ namespace web_lab_4.Areas.Admin.Controllers
                 Claims = claims.ToList(),
                 Logins = logins.ToList(),
                 RecentOrders = orders,
-                TotalOrders = await _context.Orders.CountAsync(o => o.UserId == id),
-                TotalSpent = await _context.Orders.Where(o => o.UserId == id).SumAsync(o => (decimal?)o.TotalPrice) ?? 0
+                TotalOrders = totalOrders,
+                TotalSpent = totalSpent
             };
 
             return View(userDetails);
@@ -155,10 +190,17 @@ namespace web_lab_4.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> ManageRoles(string id)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                TempData["ErrorMessage"] = "User ID is required.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction(nameof(Index));
             }
 
             var userRoles = await _userManager.GetRolesAsync(user);
@@ -180,165 +222,362 @@ namespace web_lab_4.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ManageRoles(ManageUserRolesViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Invalid data provided.";
+                return View(model);
+            }
+
             var user = await _userManager.FindByIdAsync(model.UserId);
             if (user == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Prevent admin from removing their own admin role
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == user.Id)
+            {
+                var adminRole = model.UserRoles.FirstOrDefault(r => r.RoleName == "Admin");
+                if (adminRole != null && !adminRole.IsSelected)
+                {
+                    TempData["ErrorMessage"] = "You cannot remove your own admin role.";
+                    return RedirectToAction(nameof(ManageRoles), new { id = model.UserId });
+                }
             }
 
             var userRoles = await _userManager.GetRolesAsync(user);
+            var errors = new List<string>();
 
             foreach (var roleModel in model.UserRoles)
             {
                 if (roleModel.IsSelected && !userRoles.Contains(roleModel.RoleName))
                 {
-                    await _userManager.AddToRoleAsync(user, roleModel.RoleName);
+                    var result = await _userManager.AddToRoleAsync(user, roleModel.RoleName);
+                    if (!result.Succeeded)
+                    {
+                        errors.AddRange(result.Errors.Select(e => e.Description));
+                    }
                 }
                 else if (!roleModel.IsSelected && userRoles.Contains(roleModel.RoleName))
                 {
-                    await _userManager.RemoveFromRoleAsync(user, roleModel.RoleName);
+                    var result = await _userManager.RemoveFromRoleAsync(user, roleModel.RoleName);
+                    if (!result.Succeeded)
+                    {
+                        errors.AddRange(result.Errors.Select(e => e.Description));
+                    }
                 }
             }
 
-            TempData["SuccessMessage"] = $"Roles updated successfully for {user.UserName}";
+            if (errors.Any())
+            {
+                TempData["ErrorMessage"] = "Some role updates failed: " + string.Join(", ", errors);
+            }
+            else
+            {
+                TempData["SuccessMessage"] = $"Roles updated successfully for {user.UserName}";
+            }
+
             return RedirectToAction(nameof(Details), new { id = model.UserId });
         }
 
         // Lock/Unlock user
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleLock(string id)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                return Json(new { success = false, message = "User ID is required." });
+            }
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return Json(new { success = false, message = "User not found." });
             }
 
-            if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now)
+            // Prevent admin from locking themselves
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == user.Id)
             {
-                // Unlock user
-                await _userManager.SetLockoutEndDateAsync(user, null);
-                TempData["SuccessMessage"] = $"User {user.UserName} has been unlocked.";
-            }
-            else
-            {
-                // Lock user for 1 year
-                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.Now.AddYears(1));
-                TempData["SuccessMessage"] = $"User {user.UserName} has been locked.";
+                return Json(new { success = false, message = "You cannot lock your own account." });
             }
 
-            return RedirectToAction(nameof(Details), new { id });
+            try
+            {
+                // First, ensure lockout is enabled for this user
+                if (!user.LockoutEnabled)
+                {
+                    var enableLockoutResult = await _userManager.SetLockoutEnabledAsync(user, true);
+                    if (!enableLockoutResult.Succeeded)
+                    {
+                        return Json(new { success = false, message = "Failed to enable lockout for user." });
+                    }
+                }
+
+                if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now)
+                {
+                    // Unlock user
+                    var result = await _userManager.SetLockoutEndDateAsync(user, null);
+                    if (result.Succeeded)
+                    {
+                        return Json(new { success = true, message = $"User {user.UserName} has been unlocked." });
+                    }
+                    return Json(new { 
+                        success = false, 
+                        message = "Failed to unlock user: " + string.Join(", ", result.Errors.Select(e => e.Description))
+                    });
+                }
+                else
+                {
+                    // Lock user for 1 year
+                    var lockoutEnd = DateTimeOffset.Now.AddYears(1);
+                    var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
+                    if (result.Succeeded)
+                    {
+                        return Json(new { success = true, message = $"User {user.UserName} has been locked until {lockoutEnd:yyyy-MM-dd}." });
+                    }
+                    return Json(new { 
+                        success = false, 
+                        message = "Failed to lock user: " + string.Join(", ", result.Errors.Select(e => e.Description))
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
         }
 
         // Confirm email
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmEmail(string id)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                return Json(new { success = false, message = "User ID is required." });
+            }
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return Json(new { success = false, message = "User not found." });
             }
 
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            await _userManager.ConfirmEmailAsync(user, token);
+            if (user.EmailConfirmed)
+            {
+                return Json(new { success = false, message = "Email is already confirmed." });
+            }
 
-            TempData["SuccessMessage"] = $"Email confirmed for {user.UserName}";
-            return RedirectToAction(nameof(Details), new { id });
+            try
+            {
+                // Manually confirm email without token
+                user.EmailConfirmed = true;
+                var result = await _userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    return Json(new { success = true, message = $"Email confirmed for {user.UserName}" });
+                }
+                return Json(new { 
+                    success = false, 
+                    message = "Failed to confirm email: " + string.Join(", ", result.Errors.Select(e => e.Description))
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
         }
 
         // Reset password
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(string id)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                return Json(new { success = false, message = "User ID is required." });
+            }
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return Json(new { success = false, message = "User not found." });
             }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var newPassword = GenerateRandomPassword();
-            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
-
-            if (result.Succeeded)
+            try
             {
-                TempData["SuccessMessage"] = $"Password reset for {user.UserName}. New password: {newPassword}";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Failed to reset password.";
-            }
+                // Generate new random password
+                var newPassword = GenerateRandomPassword();
+                
+                // Remove existing password and set new one
+                var removePasswordResult = await _userManager.RemovePasswordAsync(user);
+                if (!removePasswordResult.Succeeded)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Failed to remove old password: " + string.Join(", ", removePasswordResult.Errors.Select(e => e.Description))
+                    });
+                }
 
-            return RedirectToAction(nameof(Details), new { id });
+                var addPasswordResult = await _userManager.AddPasswordAsync(user, newPassword);
+                if (addPasswordResult.Succeeded)
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = $"Password reset for {user.UserName}",
+                        newPassword = newPassword 
+                    });
+                }
+                return Json(new { 
+                    success = false, 
+                    message = "Failed to set new password: " + string.Join(", ", addPasswordResult.Errors.Select(e => e.Description))
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
         }
 
         // Delete user
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                return Json(new { success = false, message = "User ID is required." });
+            }
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return Json(new { success = false, message = "User not found." });
+            }
+
+            // Prevent admin from deleting themselves
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == user.Id)
+            {
+                return Json(new { success = false, message = "You cannot delete your own account." });
             }
 
             // Check if user has orders
-            var hasOrders = await _context.Orders.AnyAsync(o => o.UserId == id);
-            if (hasOrders)
+            try
             {
-                TempData["ErrorMessage"] = "Cannot delete user with existing orders. Lock the user instead.";
-                return RedirectToAction(nameof(Details), new { id });
+                var hasOrders = await _context.Orders.AnyAsync(o => o.UserId == id);
+                if (hasOrders)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Cannot delete user with existing orders. Lock the user instead." 
+                    });
+                }
+            }
+            catch (Exception)
+            {
+                // If Orders table doesn't exist, proceed with deletion
             }
 
-            var result = await _userManager.DeleteAsync(user);
-            if (result.Succeeded)
+            try
             {
-                TempData["SuccessMessage"] = $"User {user.UserName} has been deleted.";
-                return RedirectToAction(nameof(Index));
+                var result = await _userManager.DeleteAsync(user);
+                if (result.Succeeded)
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = $"User {user.UserName} has been deleted.",
+                        redirect = true
+                    });
+                }
+                return Json(new { 
+                    success = false, 
+                    message = "Failed to delete user: " + string.Join(", ", result.Errors.Select(e => e.Description))
+                });
             }
-
-            TempData["ErrorMessage"] = "Failed to delete user.";
-            return RedirectToAction(nameof(Details), new { id });
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "An error occurred while deleting user." });
+            }
         }
 
         // Get user statistics for dashboard
         [HttpGet]
         public async Task<IActionResult> GetUserStats()
         {
-            var totalUsers = await _userManager.Users.CountAsync();
-            var activeUsers = await _userManager.Users.CountAsync(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.Now);
-            var lockedUsers = totalUsers - activeUsers;
-            var unconfirmedUsers = await _userManager.Users.CountAsync(u => !u.EmailConfirmed);
+            try
+            {
+                var totalUsers = await _userManager.Users.CountAsync();
+                var activeUsers = await _userManager.Users.CountAsync(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.Now);
+                var lockedUsers = totalUsers - activeUsers;
+                var unconfirmedUsers = await _userManager.Users.CountAsync(u => !u.EmailConfirmed);
 
-            var recentUsers = await _userManager.Users
-                .OrderByDescending(u => u.Id) // Assuming newer users have higher IDs
-                .Take(5)
-                .Select(u => new {
-                    u.Id,
-                    u.UserName,
-                    u.Email,
-                    u.EmailConfirmed,
-                    IsActive = !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.Now
-                })
-                .ToListAsync();
+                var recentUsers = await _userManager.Users
+                    .OrderByDescending(u => u.Id)
+                    .Take(5)
+                    .Select(u => new {
+                        u.Id,
+                        u.UserName,
+                        u.Email,
+                        u.EmailConfirmed,
+                        IsActive = !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.Now
+                    })
+                    .ToListAsync();
 
-            return Json(new {
-                totalUsers,
-                activeUsers,
-                lockedUsers,
-                unconfirmedUsers,
-                recentUsers
-            });
+                return Json(new {
+                    success = true,
+                    totalUsers,
+                    activeUsers,
+                    lockedUsers,
+                    unconfirmedUsers,
+                    recentUsers
+                });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "Failed to retrieve user statistics." });
+            }
         }
 
         private string GenerateRandomPassword()
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+            const string upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lowerCase = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            const string specialChars = "!@#$%^&*";
+            
             var random = new Random();
-            return new string(Enumerable.Repeat(chars, 12).Select(s => s[random.Next(s.Length)]).ToArray());
+            var password = new List<char>();
+
+            // Ensure password meets complexity requirements
+            password.Add(upperCase[random.Next(upperCase.Length)]);
+            password.Add(lowerCase[random.Next(lowerCase.Length)]);
+            password.Add(digits[random.Next(digits.Length)]);
+            password.Add(specialChars[random.Next(specialChars.Length)]);
+
+            // Fill remaining positions
+            const string allChars = upperCase + lowerCase + digits + specialChars;
+            for (int i = 4; i < 12; i++)
+            {
+                password.Add(allChars[random.Next(allChars.Length)]);
+            }
+
+            // Shuffle the password
+            for (int i = password.Count - 1; i > 0; i--)
+            {
+                int j = random.Next(i + 1);
+                (password[i], password[j]) = (password[j], password[i]);
+            }
+
+            return new string(password.ToArray());
         }
     }
 }

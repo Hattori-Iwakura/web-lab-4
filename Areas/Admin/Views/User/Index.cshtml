@@ -2,7 +2,7 @@
 @model List<web_lab_4.Models.UserViewModel>
 
 @{
-    ViewData["Title"] = "User Management";
+    @* ViewData["Title"] = "User Management"; *@
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
@@ -287,10 +287,21 @@
                         id: userId,
                         __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     },
-                    success: function() {
-                        location.reload();
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message
+                            if (response.message) {
+                                alert(response.message);
+                            }
+                            // Reload the page to reflect changes
+                            location.reload();
+                        } else {
+                            // Show error message
+                            alert(response.message || 'An error occurred while updating user status.');
+                        }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
                         alert('Error updating user status. Please try again.');
                     }
                 });

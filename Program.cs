@@ -21,6 +21,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // CHỈ GIỮ LẠI cấu hình Identity này
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;

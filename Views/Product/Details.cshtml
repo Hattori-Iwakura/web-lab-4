@@ -508,7 +508,7 @@
                     @foreach (var relatedProduct in relatedProducts.Take(4))
                     {
                         <div class="col-lg-3 col-md-6 mb-4">
-                            <div class="card product-card h-100">
+                            <div class="card product-card h-100 clickable-card" data-href="@Url.Action("Details", new { id = relatedProduct.Id })">
                                 <div class="card-img-container">
                                     @if (!string.IsNullOrEmpty(relatedProduct.ImageUrl))
                                     {
@@ -550,9 +550,11 @@
                                     <div class="mt-auto">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="price text-success fw-bold">@relatedProduct.Price.ToString("C")</span>
-                                            <a asp-action="Details" asp-route-id="@relatedProduct.Id" class="btn btn-outline-primary btn-sm">
+                                            <button class="btn btn-outline-primary btn-sm related-product-view-btn" 
+                                                    data-product-id="@relatedProduct.Id"
+                                                    onclick="event.stopPropagation();">
                                                 <i class="fas fa-eye"></i> View
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -883,6 +885,28 @@
             };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
+
+        // Make related product cards clickable
+        $(document).on('click', '.clickable-card', function(e) {
+            // Check if the click target is not a button or link
+            if (!$(e.target).is('button, a, input') && !$(e.target).closest('button, a, form').length) {
+                var href = $(this).data('href');
+                if (href) {
+                    window.location.href = href;
+                }
+            }
+        });
+
+        // Handle related product view button clicks
+        $('.related-product-view-btn').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent card click event
+            
+            var productId = $(this).data('product-id');
+            if (productId) {
+                window.location.href = '/Product/Details/' + productId;
+            }
+        });
     </script>
 }
 
@@ -938,6 +962,37 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
+        /* Related Products Card Styles */
+        .clickable-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clickable-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #007bff !important;
+        }
+
+        .clickable-card:hover .card-title {
+            color: #007bff;
+        }
+
+        /* Prevent buttons from inheriting card cursor */
+        .clickable-card button,
+        .clickable-card a {
+            cursor: pointer !important;
+        }
+
+        .related-product-view-btn {
+            transition: all 0.2s ease;
+        }
+
+        .related-product-view-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Card image container */
         .card-img-container {
             height: 200px;
             overflow: hidden;
@@ -950,7 +1005,7 @@
             transition: transform 0.3s ease;
         }
 
-        .product-card:hover .card-img-top {
+        .clickable-card:hover .card-img-top {
             transform: scale(1.05);
         }
 

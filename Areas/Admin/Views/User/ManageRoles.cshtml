@@ -11,93 +11,325 @@
         <i class="fas fa-user-cog"></i> Manage User Roles
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to User
+        <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+        <a asp-action="Index" class="btn btn-outline-primary">
+            <i class="fas fa-users"></i> All Users
         </a>
     </div>
 </div>
 
-<div class="row justify-content-center">
+<div class="row">
     <div class="col-lg-8">
         <div class="card shadow">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-user"></i> User: @Model.UserName
+                    <i class="fas fa-shield-alt"></i> Role Assignment for: <strong>@Model.UserName</strong>
                 </h6>
             </div>
             <div class="card-body">
                 <form asp-action="ManageRoles" method="post">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="UserId" />
                     <input type="hidden" asp-for="UserName" />
-
-                    <div class="mb-4">
-                        <p class="text-muted">Select the roles you want to assign to this user:</p>
+                    
+                    <div class="row">
+                        @if (Model.UserRoles != null && Model.UserRoles.Any())
+                        {
+                            @for (int i = 0; i < Model.UserRoles.Count; i++)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-check-card">
+                                        <input type="hidden" asp-for="UserRoles[i].RoleId" />
+                                        <input type="hidden" asp-for="UserRoles[i].RoleName" />
+                                        <input class="form-check-input" type="checkbox" asp-for="UserRoles[i].IsSelected" id="role_@i">
+                                        <label class="form-check-label w-100" for="role_@i">
+                                            <div class="role-card">
+                                                <div class="role-icon">
+                                                    <i class="fas fa-@GetRoleIcon(Model.UserRoles[i].RoleName)"></i>
+                                                </div>
+                                                <div class="role-info">
+                                                    <h6 class="role-name">@Model.UserRoles[i].RoleName</h6>
+                                                    <small class="role-description text-muted">@GetRoleDescription(Model.UserRoles[i].RoleName)</small>
+                                                </div>
+                                                <div class="role-status">
+                                                    @if (Model.UserRoles[i].IsSelected)
+                                                    {
+                                                        <span class="badge bg-success">Assigned</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Not Assigned</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    No roles are available in the system. Please create roles first.
+                                </div>
+                            </div>
+                        }
                     </div>
 
-                    @for (int i = 0; i < Model.UserRoles.Count; i++)
+                    @if (Model.UserRoles != null && Model.UserRoles.Any())
                     {
-                        <input type="hidden" asp-for="UserRoles[i].RoleId" />
-                        <input type="hidden" asp-for="UserRoles[i].RoleName" />
-                        
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" asp-for="UserRoles[i].IsSelected" id="role_@i">
-                            <label class="form-check-label" for="role_@i">
-                                <strong>@Model.UserRoles[i].RoleName</strong>
-                                <br>
-                                <small class="text-muted">
-                                    @switch (Model.UserRoles[i].RoleName)
-                                    {
-                                        case "Admin":
-                                            <span>Full access to all admin features</span>
-                                            break;
-                                        case "Manager":
-                                            <span>Manage products, categories, and orders</span>
-                                            break;
-                                        case "Customer":
-                                            <span>Standard customer access</span>
-                                            break;
-                                        default:
-                                            <span>Role description not available</span>
-                                            break;
-                                    }
-                                </small>
-                            </label>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Roles
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
                         </div>
                     }
+                </form>
+            </div>
+        </div>
+    </div>
 
-                    <hr class="my-4">
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-info-circle"></i> Role Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb"></i> Role Management Tips:</h6>
+                    <ul class="mb-0">
+                        <li>Admin role provides full system access</li>
+                        <li>User role provides basic customer access</li>
+                        <li>Changes take effect immediately</li>
+                        <li>Users need at least one role to access the system</li>
+                    </ul>
+                </div>
 
-                    <div class="d-flex justify-content-between">
-                        <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Update Roles
+                @if (Model.UserRoles != null)
+                {
+                    <div class="mt-3">
+                        <h6>Current Role Summary:</h6>
+                        <div class="role-summary">
+                            @{
+                                var assignedRoles = Model.UserRoles.Where(r => r.IsSelected).Count();
+                                var totalRoles = Model.UserRoles.Count();
+                            }
+                            <p class="mb-1">
+                                <strong>@assignedRoles</strong> of <strong>@totalRoles</strong> roles assigned
+                            </p>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar" role="progressbar" style="width: @((double)assignedRoles / totalRoles * 100)%"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="mt-3">
+                    <h6>Quick Actions:</h6>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="selectAllRoles()">
+                            <i class="fas fa-check-double"></i> Select All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearAllRoles()">
+                            <i class="fas fa-times"></i> Clear All
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+@functions {
+    private string GetRoleIcon(string roleName)
+    {
+        return roleName?.ToLower() switch
+        {
+            "admin" => "user-shield",
+            "manager" => "user-tie",
+            "user" => "user",
+            "customer" => "shopping-cart",
+            _ => "user-circle"
+        };
+    }
+
+    private string GetRoleDescription(string roleName)
+    {
+        return roleName?.ToLower() switch
+        {
+            "admin" => "Full system administration access",
+            "manager" => "Management and oversight capabilities",
+            "user" => "Standard user access",
+            "customer" => "Customer shopping access",
+            _ => "Standard role access"
+        };
+    }
+}
+
 @section Scripts {
     <script>
-        // Add role selection validation
-        $('form').on('submit', function(e) {
-            const selectedRoles = $('input[type="checkbox"]:checked').length;
-            
-            if (selectedRoles === 0) {
-                if (!confirm('No roles selected. This user will have no permissions. Continue?')) {
-                    e.preventDefault();
-                    return false;
+        function selectAllRoles() {
+            $('input[type="checkbox"][name*="IsSelected"]').prop('checked', true);
+            updateRoleCards();
+        }
+
+        function clearAllRoles() {
+            $('input[type="checkbox"][name*="IsSelected"]').prop('checked', false);
+            updateRoleCards();
+        }
+
+        function updateRoleCards() {
+            $('input[type="checkbox"][name*="IsSelected"]').each(function() {
+                const $checkbox = $(this);
+                const $card = $checkbox.closest('.form-check-card');
+                const $badge = $card.find('.role-status .badge');
+                
+                if ($checkbox.is(':checked')) {
+                    $card.addClass('selected');
+                    $badge.removeClass('bg-secondary').addClass('bg-success').text('Assigned');
+                } else {
+                    $card.removeClass('selected');
+                    $badge.removeClass('bg-success').addClass('bg-secondary').text('Not Assigned');
                 }
-            }
+            });
+        }
+
+        $(document).ready(function() {
+            // Initialize role cards
+            updateRoleCards();
             
-            // Show loading state
-            const submitBtn = $(this).find('button[type="submit"]');
-            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Updating...');
-            submitBtn.prop('disabled', true);
+            // Handle checkbox changes
+            $('input[type="checkbox"][name*="IsSelected"]').change(function() {
+                updateRoleCards();
+            });
+
+            // Form validation
+            $('form').submit(function(e) {
+                const checkedRoles = $('input[type="checkbox"][name*="IsSelected"]:checked').length;
+                
+                if (checkedRoles === 0) {
+                    if (!confirm('This user will have no roles assigned. Are you sure you want to continue?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Show loading state
+                const $submitBtn = $(this).find('button[type="submit"]');
+                $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+            });
         });
     </script>
+}
+
+@section Styles {
+    <style>
+        .form-check-card {
+            border: 2px solid #e3e6f0;
+            border-radius: 0.5rem;
+            padding: 0;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .form-check-card:hover {
+            border-color: #5a5c69;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .form-check-card.selected {
+            border-color: #4e73df;
+            background-color: #f8f9fc;
+        }
+
+        .form-check-card .form-check-input {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            margin: 0;
+        }
+
+        .role-card {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        .role-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4e73df, #224abe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .role-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .role-name {
+            margin: 0;
+            font-weight: 600;
+            color: #2e59d9;
+        }
+
+        .role-description {
+            margin: 0;
+            font-size: 0.8rem;
+        }
+
+        .role-status {
+            flex-shrink: 0;
+        }
+
+        .role-summary {
+            background: #f8f9fc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e3e6f0;
+        }
+
+        .progress {
+            border-radius: 10px;
+            background-color: #e3e6f0;
+        }
+
+        .progress-bar {
+            background: linear-gradient(45deg, #4e73df, #224abe);
+            border-radius: 10px;
+        }
+
+        @@media (max-width: 768px) {
+            .role-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+            
+            .role-info {
+                order: 2;
+            }
+            
+            .role-status {
+                order: 3;
+            }
+        }
+    </style>
 }

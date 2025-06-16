@@ -297,7 +297,7 @@
         </div>
     </div>
 </div>
-
+@Html.AntiForgeryToken()
 @section Scripts {
     <script>
         function toggleLock(userId, userName, isActive) {
@@ -311,6 +311,7 @@
 
         function confirmEmail(userId) {
             if (confirm('Confirm email for this user?')) {
+                // Sửa lỗi: Loại bỏ alert không cần thiết
                 performAction('@Url.Action("ConfirmEmail")', { id: userId });
             }
         }

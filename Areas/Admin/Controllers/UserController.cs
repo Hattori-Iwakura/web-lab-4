@@ -15,14 +15,17 @@ namespace web_lab_4.Areas.Admin.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
 
+        private readonly ILogger<UserController> _logger;
         public UserController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            ILogger<UserController> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
+            _logger = logger;
         }
 
         // Display all users
@@ -203,32 +206,41 @@ namespace web_lab_4.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var userRoles = await _userManager.GetRolesAsync(user);
-            var allRoles = await _roleManager.Roles.ToListAsync();
-
-            var model = new ManageUserRolesViewModel
+            try
             {
-                UserId = user.Id,
-                UserName = user.UserName,
-                UserRoles = allRoles.Select(role => new UserRoleViewModel
-                {
-                    RoleId = role.Id,
-                    RoleName = role.Name,
-                    IsSelected = userRoles.Contains(role.Name)
-                }).ToList()
-            };
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var allRoles = await _roleManager.Roles.ToListAsync();
 
-            return View(model);
+                var model = new ManageUserRolesViewModel
+                {
+                    UserId = user.Id,
+                    UserName = user.UserName,
+                    UserRoles = allRoles.Select(role => new UserRoleViewModel
+                    {
+                        RoleId = role.Id,
+                        RoleName = role.Name,
+                        IsSelected = userRoles.Contains(role.Name)
+                    }).ToList()
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading roles for user {UserId}", id);
+                TempData["ErrorMessage"] = "An error occurred while loading user roles.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ManageRoles(ManageUserRolesViewModel model)
         {
-            if (!ModelState.IsValid)
+            if (model == null || string.IsNullOrEmpty(model.UserId))
             {
                 TempData["ErrorMessage"] = "Invalid data provided.";
-                return View(model);
+                return RedirectToAction(nameof(Index));
             }
 
             var user = await _userManager.FindByIdAsync(model.UserId);
@@ -238,51 +250,63 @@ namespace web_lab_4.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Prevent admin from removing their own admin role
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser?.Id == user.Id)
+            try
             {
-                var adminRole = model.UserRoles.FirstOrDefault(r => r.RoleName == "Admin");
-                if (adminRole != null && !adminRole.IsSelected)
+                // Prevent admin from removing their own admin role
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser?.Id == user.Id)
                 {
-                    TempData["ErrorMessage"] = "You cannot remove your own admin role.";
-                    return RedirectToAction(nameof(ManageRoles), new { id = model.UserId });
-                }
-            }
-
-            var userRoles = await _userManager.GetRolesAsync(user);
-            var errors = new List<string>();
-
-            foreach (var roleModel in model.UserRoles)
-            {
-                if (roleModel.IsSelected && !userRoles.Contains(roleModel.RoleName))
-                {
-                    var result = await _userManager.AddToRoleAsync(user, roleModel.RoleName);
-                    if (!result.Succeeded)
+                    var adminRole = model.UserRoles?.FirstOrDefault(r => r.RoleName == "Admin");
+                    if (adminRole != null && !adminRole.IsSelected)
                     {
-                        errors.AddRange(result.Errors.Select(e => e.Description));
+                        TempData["ErrorMessage"] = "You cannot remove your own admin role.";
+                        return RedirectToAction(nameof(ManageRoles), new { id = model.UserId });
                     }
                 }
-                else if (!roleModel.IsSelected && userRoles.Contains(roleModel.RoleName))
+
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var errors = new List<string>();
+
+                if (model.UserRoles != null)
                 {
-                    var result = await _userManager.RemoveFromRoleAsync(user, roleModel.RoleName);
-                    if (!result.Succeeded)
+                    foreach (var roleModel in model.UserRoles)
                     {
-                        errors.AddRange(result.Errors.Select(e => e.Description));
+                        if (roleModel.IsSelected && !userRoles.Contains(roleModel.RoleName))
+                        {
+                            var result = await _userManager.AddToRoleAsync(user, roleModel.RoleName);
+                            if (!result.Succeeded)
+                            {
+                                errors.AddRange(result.Errors.Select(e => e.Description));
+                            }
+                        }
+                        else if (!roleModel.IsSelected && userRoles.Contains(roleModel.RoleName))
+                        {
+                            var result = await _userManager.RemoveFromRoleAsync(user, roleModel.RoleName);
+                            if (!result.Succeeded)
+                            {
+                                errors.AddRange(result.Errors.Select(e => e.Description));
+                            }
+                        }
                     }
                 }
-            }
 
-            if (errors.Any())
-            {
-                TempData["ErrorMessage"] = "Some role updates failed: " + string.Join(", ", errors);
-            }
-            else
-            {
-                TempData["SuccessMessage"] = $"Roles updated successfully for {user.UserName}";
-            }
+                if (errors.Any())
+                {
+                    TempData["ErrorMessage"] = "Some role updates failed: " + string.Join(", ", errors);
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = $"Roles updated successfully for {user.UserName}";
+                }
 
-            return RedirectToAction(nameof(Details), new { id = model.UserId });
+                return RedirectToAction(nameof(Details), new { id = model.UserId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating roles for user {UserId}", model.UserId);
+                TempData["ErrorMessage"] = "An error occurred while updating user roles.";
+                return RedirectToAction(nameof(Details), new { id = model.UserId });
+            }
         }
 
         // Lock/Unlock user
@@ -310,46 +334,36 @@ namespace web_lab_4.Areas.Admin.Controllers
 
             try
             {
-                // First, ensure lockout is enabled for this user
-                if (!user.LockoutEnabled)
-                {
-                    var enableLockoutResult = await _userManager.SetLockoutEnabledAsync(user, true);
-                    if (!enableLockoutResult.Succeeded)
-                    {
-                        return Json(new { success = false, message = "Failed to enable lockout for user." });
-                    }
-                }
-
+                IdentityResult result;
+                
                 if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now)
                 {
                     // Unlock user
-                    var result = await _userManager.SetLockoutEndDateAsync(user, null);
+                    result = await _userManager.SetLockoutEndDateAsync(user, null);
                     if (result.Succeeded)
                     {
+                        // Reset failed access count when unlocking
+                        await _userManager.ResetAccessFailedCountAsync(user);
                         return Json(new { success = true, message = $"User {user.UserName} has been unlocked." });
                     }
-                    return Json(new { 
-                        success = false, 
-                        message = "Failed to unlock user: " + string.Join(", ", result.Errors.Select(e => e.Description))
-                    });
                 }
                 else
                 {
                     // Lock user for 1 year
                     var lockoutEnd = DateTimeOffset.Now.AddYears(1);
-                    var result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
+                    result = await _userManager.SetLockoutEndDateAsync(user, lockoutEnd);
                     if (result.Succeeded)
                     {
                         return Json(new { success = true, message = $"User {user.UserName} has been locked until {lockoutEnd:yyyy-MM-dd}." });
                     }
-                    return Json(new { 
-                        success = false, 
-                        message = "Failed to lock user: " + string.Join(", ", result.Errors.Select(e => e.Description))
-                    });
                 }
+                
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Json(new { success = false, message = "Operation failed: " + errors });
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Exception occurred while toggling lock for user {UserName}", user.UserName);
                 return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
             }
         }
@@ -359,6 +373,8 @@ namespace web_lab_4.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmEmail(string id)
         {
+            _logger.LogInformation("ConfirmEmail called for user ID: {UserId}", id);
+            
             if (string.IsNullOrEmpty(id))
             {
                 return Json(new { success = false, message = "User ID is required." });
@@ -383,15 +399,17 @@ namespace web_lab_4.Areas.Admin.Controllers
 
                 if (result.Succeeded)
                 {
+                    _logger.LogInformation("Email confirmed successfully for user {UserName}", user.UserName);
                     return Json(new { success = true, message = $"Email confirmed for {user.UserName}" });
                 }
-                return Json(new { 
-                    success = false, 
-                    message = "Failed to confirm email: " + string.Join(", ", result.Errors.Select(e => e.Description))
-                });
+                
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogError("Failed to confirm email for user {UserName}: {Errors}", user.UserName, errors);
+                return Json(new { success = false, message = "Failed to confirm email: " + errors });
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Exception occurred while confirming email for user {UserName}", user.UserName);
                 return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
             }
         }
@@ -401,6 +419,7 @@ namespace web_lab_4.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(string id)
         {
+            
             if (string.IsNullOrEmpty(id))
             {
                 return Json(new { success = false, message = "User ID is required." });

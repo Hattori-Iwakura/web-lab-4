@@ -41,6 +41,31 @@ namespace web_lab_4.Areas.Admin.Controllers
             {
                 var data = await _dashboardService.GetDashboardDataAsync();
                 
+                var recentOrders = data.RecentOrders?.Select(o => new {
+                    id = o.Id,
+                    customerName = o.CustomerName,
+                    amount = o.Amount,
+                    status = o.Status,
+                    date = o.Date.ToString("yyyy-MM-dd"),
+                    itemCount = o.ItemCount
+                }) ?? Enumerable.Empty<object>();
+
+                var topProducts = data.TopProducts?.Select(p => new {
+                    id = p.Id,
+                    name = p.Name,
+                    salesCount = p.SalesCount,
+                    revenue = p.Revenue,
+                    category = p.Category
+                }) ?? Enumerable.Empty<object>();
+
+                var lowStockProducts = data.LowStockProducts?.Select(p => new {
+                    id = p.Id,
+                    name = p.Name,
+                    stock = p.Stock,
+                    isExpired = p.IsExpired,
+                    category = p.Category
+                }) ?? Enumerable.Empty<object>();
+                
                 return Json(new {
                     success = true,
                     totalProducts = data.TotalProducts,
@@ -51,28 +76,9 @@ namespace web_lab_4.Areas.Admin.Controllers
                     lowStockCount = data.LowStockCount,
                     expiredProductsCount = data.ExpiredProductsCount,
                     newCustomersThisMonth = data.NewCustomersThisMonth,
-                    recentOrders = data.RecentOrders.Select(o => new {
-                        id = o.Id,
-                        customerName = o.CustomerName,
-                        amount = o.Amount,
-                        status = o.Status,
-                        date = o.Date.ToString("yyyy-MM-dd"),
-                        itemCount = o.ItemCount
-                    }),
-                    topProducts = data.TopProducts.Select(p => new {
-                        id = p.Id,
-                        name = p.Name,
-                        salesCount = p.SalesCount,
-                        revenue = p.Revenue,
-                        category = p.Category
-                    }),
-                    lowStockProducts = data.LowStockProducts.Select(p => new {
-                        id = p.Id,
-                        name = p.Name,
-                        stock = p.Stock,
-                        isExpired = p.IsExpired,
-                        category = p.Category
-                    }),
+                    recentOrders = recentOrders,
+                    topProducts = topProducts,
+                    lowStockProducts = lowStockProducts,
                     orderStatusSummary = data.OrderStatusSummary
                 });
             }
@@ -91,8 +97,8 @@ namespace web_lab_4.Areas.Admin.Controllers
                 var chartData = await _dashboardService.GetSalesChartDataAsync(period);
                 return Json(new { 
                     success = true, 
-                    labels = chartData.Labels,
-                    data = chartData.Data
+                    labels = chartData?.Labels ?? new List<string>(),
+                    data = chartData?.Data ?? new List<decimal>()
                 });
             }
             catch (Exception ex)
@@ -222,26 +228,35 @@ namespace web_lab_4.Areas.Admin.Controllers
             {
                 case "products":
                     csv.AppendLine("Product Name,Sales Count,Revenue,Category");
-                    foreach (var product in data.TopProducts)
+                    if (data.TopProducts != null)
                     {
-                        csv.AppendLine($"{product.Name},{product.SalesCount},{product.Revenue:C},{product.Category}");
+                        foreach (var product in data.TopProducts)
+                        {
+                            csv.AppendLine($"{product.Name},{product.SalesCount},{product.Revenue:C},{product.Category}");
+                        }
                     }
                     break;
                     
                 case "orders":
                     csv.AppendLine("Order ID,Customer,Amount,Status,Date");
-                    foreach (var order in data.RecentOrders)
+                    if (data.RecentOrders != null)
                     {
-                        csv.AppendLine($"{order.Id},{order.CustomerName},{order.Amount:C},{order.Status},{order.Date:yyyy-MM-dd}");
+                        foreach (var order in data.RecentOrders)
+                        {
+                            csv.AppendLine($"{order.Id},{order.CustomerName},{order.Amount:C},{order.Status},{order.Date:yyyy-MM-dd}");
+                        }
                     }
                     break;
                     
                 case "revenue":
                 default:
                     csv.AppendLine("Month,Revenue,Order Count,Average Order Value");
-                    foreach (var revenue in data.MonthlyRevenueData)
+                    if (data.MonthlyRevenueData != null)
                     {
-                        csv.AppendLine($"{revenue.Month},{revenue.Revenue:C},{revenue.OrderCount},{revenue.AverageOrderValue:C}");
+                        foreach (var revenue in data.MonthlyRevenueData)
+                        {
+                            csv.AppendLine($"{revenue.Month},{revenue.Revenue:C},{revenue.OrderCount},{revenue.AverageOrderValue:C}");
+                        }
                     }
                     break;
             }

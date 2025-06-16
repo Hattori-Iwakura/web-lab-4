@@ -73,6 +73,5 @@ namespace web_lab_4.Models.Dashboard
     {
         public List<string> Labels { get; set; } = new List<string>();
         public List<decimal> Data { get; set; } = new List<decimal>();
-        public string ChartType { get; set; } = "line";
     }
 }

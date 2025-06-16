@@ -99,44 +99,56 @@
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    @switch (Model.Status)
-                    {
-                        case "Pending":
-                            <i class="fas fa-clock fa-3x text-warning mb-2"></i>
-                            <h5 class="text-warning">@Model.Status</h5>
-                            break;
-                        case "Processing":
-                            <i class="fas fa-cog fa-3x text-primary mb-2 fa-spin"></i>
-                            <h5 class="text-primary">@Model.Status</h5>
-                            break;
-                        case "Shipped":
-                            <i class="fas fa-shipping-fast fa-3x text-info mb-2"></i>
-                            <h5 class="text-info">@Model.Status</h5>
-                            break;
-                        case "Completed":
-                            <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
-                            <h5 class="text-success">@Model.Status</h5>
-                            break;
-                        case "Cancelled":
-                            <i class="fas fa-times-circle fa-3x text-danger mb-2"></i>
-                            <h5 class="text-danger">@Model.Status</h5>
-                            break;
-                        default:
-                            <i class="fas fa-question-circle fa-3x text-secondary mb-2"></i>
-                            <h5 class="text-secondary">@Model.Status</h5>
-                            break;
+                    @{
+                        var displayStatus = Model.Status;
+                        var statusClass = "";
+                        var statusIcon = "";
+                        
+                        switch (Model.Status?.ToLower())
+                        {
+                            case "pending":
+                                statusClass = "text-warning";
+                                statusIcon = "fas fa-clock fa-3x text-warning mb-2";
+                                break;
+                            case "processing":
+                                statusClass = "text-primary";
+                                statusIcon = "fas fa-cog fa-3x text-primary mb-2 fa-spin";
+                                break;
+                            case "shipped":
+                                statusClass = "text-info";
+                                statusIcon = "fas fa-shipping-fast fa-3x text-info mb-2";
+                                break;
+                            case "completed":
+                            case "delivered":
+                                statusClass = "text-success";
+                                statusIcon = "fas fa-check-circle fa-3x text-success mb-2";
+                                displayStatus = "Completed";
+                                break;
+                            case "cancelled":
+                                statusClass = "text-danger";
+                                statusIcon = "fas fa-times-circle fa-3x text-danger mb-2";
+                                break;
+                            default:
+                                statusClass = "text-secondary";
+                                statusIcon = "fas fa-question-circle fa-3x text-secondary mb-2";
+                                break;
+                        }
                     }
+                    
+                    <i class="@statusIcon"></i>
+                    <h5 class="@statusClass">@displayStatus</h5>
                 </div>
 
                 <h6>Update Status</h6>
                 <form asp-action="UpdateStatus" method="post">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
                     <div class="mb-3">
                         <select name="status" class="form-select">
                             <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
                             <option value="Processing" selected="@(Model.Status == "Processing")">Processing</option>
                             <option value="Shipped" selected="@(Model.Status == "Shipped")">Shipped</option>
-                            <option value="Completed" selected="@(Model.Status == "Completed")">Completed</option>
+                            <option value="Completed" selected="@(Model.Status == "Completed" || Model.Status == "Delivered")">Completed</option>
                             <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Cancelled</option>
                         </select>
                     </div>
@@ -188,7 +200,7 @@
                         </div>
                     }
                     
-                    @if (Model.Status == "Shipped" || Model.Status == "Completed")
+                    @if (Model.Status == "Shipped" || Model.Status == "Completed" || Model.Status == "Delivered")
                     {
                         <div class="timeline-item active">
                             <div class="timeline-marker bg-info"></div>
@@ -199,7 +211,7 @@
                         </div>
                     }
                     
-                    @if (Model.Status == "Completed")
+                    @if (Model.Status == "Completed" || Model.Status == "Delivered")
                     {
                         <div class="timeline-item active">
                             <div class="timeline-marker bg-success"></div>
@@ -294,5 +306,3 @@
         }
     </style>
 }
-
-@Html.AntiForgeryToken()

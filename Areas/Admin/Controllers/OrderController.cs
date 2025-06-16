@@ -51,7 +51,7 @@ namespace web_lab_4.Areas.Admin.Controllers
                 // Statistics for dashboard
                 ViewBag.TotalOrders = await _orderService.GetTotalOrdersCountAsync();
                 ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
-                ViewBag.CompletedOrders = orders.Count(o => o.Status == "Delivered"); // Changed from "Completed" to "Delivered"
+                ViewBag.CompletedOrders = orders.Count(o => o.Status == "Completed" || o.Status == "Delivered"); // Support both
                 ViewBag.TotalRevenue = await _orderService.GetTotalRevenueAsync();
                 
                 ViewBag.CurrentStatus = status;
@@ -98,6 +98,15 @@ namespace web_lab_4.Areas.Admin.Controllers
         {
             try
             {
+                // Validate status
+                var validStatuses = new[] { "Pending", "Processing", "Shipped", "Completed", "Delivered", "Cancelled" };
+                
+                if (string.IsNullOrEmpty(status) || !validStatuses.Contains(status))
+                {
+                    TempData["ErrorMessage"] = $"Invalid order status: {status}. Valid statuses are: {string.Join(", ", validStatuses)}";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
                 await _orderService.UpdateOrderStatusAsync(id, status);
                 TempData["SuccessMessage"] = $"Order #{id} status updated to {status}. Email notification sent to customer.";
             }

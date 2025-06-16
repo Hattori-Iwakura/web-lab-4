@@ -64,19 +64,22 @@ namespace web_lab_4.Services
 
         public async Task UpdateOrderStatusAsync(int orderId, string status)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
-                
-            if (order == null)
-                throw new ArgumentException($"Order with ID {orderId} not found");
-
             // Validate status
-            var validStatuses = new[] { "Pending", "Processing", "Shipped", "Delivered", "Cancelled" };
+            var validStatuses = new[] { "Pending", "Processing", "Shipped", "Completed", "Delivered", "Cancelled" };
+            
             if (!validStatuses.Contains(status))
-                throw new ArgumentException("Invalid order status");
+            {
+                throw new ArgumentException($"Invalid order status: {status}. Valid statuses are: {string.Join(", ", validStatuses)}");
+            }
 
-            var oldStatus = order.Status;
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+            {
+                throw new ArgumentException($"Order with ID {orderId} not found");
+            }
+
+            var oldStatus = order.Status; // Capture the old status before updating
+
             order.Status = status;
             await _context.SaveChangesAsync();
 
